@@ -13,6 +13,7 @@ use App\Modules\Account\Controllers\LedgerController;
 use App\Modules\Account\Controllers\VoucherController;
 use App\Modules\Auth\Controllers\LoginController;
 use App\Modules\Auth\Controllers\ProfileController;
+use App\Modules\Catalog\Controllers\CatalogController;
 use App\Modules\Dashboard\Controllers\DashboardController;
 
 // লগইন (গেস্ট)
@@ -26,6 +27,16 @@ Router::group(['prefix' => '/admin', 'guard' => 'admin'], function (): void {
 
     // প্রোফাইল
     Router::get('/profile', [ProfileController::class, 'show'], ['name' => 'admin.profile']);
+
+    // ---------------------------------------------------------------------
+    // ক্যাটালগ — স্থির পাথ আগে, {id} পরে
+    // ---------------------------------------------------------------------
+    Router::get('/categories',          [CatalogController::class, 'categories'],    ['name' => 'admin.category.index']);
+    Router::get('/units',               [CatalogController::class, 'units'],         ['name' => 'admin.unit.index']);
+    Router::get('/attributes',          [CatalogController::class, 'attributes'],    ['name' => 'admin.attribute.index']);
+    Router::get('/products',            [CatalogController::class, 'products'],      ['name' => 'admin.product.index']);
+    Router::get('/products/create',     [CatalogController::class, 'productCreate'], ['name' => 'admin.product.create']);
+    Router::get('/products/{id}/edit',  [CatalogController::class, 'productEdit'],   ['name' => 'admin.product.edit']);
 
     // ভাউচার
     Router::get('/vouchers',            [VoucherController::class, 'index'], ['name' => 'admin.voucher.index']);

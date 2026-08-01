@@ -27,6 +27,16 @@ final class Menu
                 ],
             ],
             [
+                'title' => 'ক্যাটালগ',
+                'icon'  => 'tag',
+                'items' => [
+                    ['label' => 'প্রোডাক্ট',   'path' => '/admin/products',   'icon' => 'box'],
+                    ['label' => 'ক্যাটাগরি',   'path' => '/admin/categories', 'icon' => 'folder'],
+                    ['label' => 'সাইজ / রঙ',   'path' => '/admin/attributes', 'icon' => 'sliders'],
+                    ['label' => 'ইউনিট',       'path' => '/admin/units',      'icon' => 'ruler'],
+                ],
+            ],
+            [
                 'title' => 'হিসাব',
                 'icon'  => 'book',
                 'items' => [
@@ -137,6 +147,11 @@ final class Menu
             'trend-down' => '<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>',
             'in'        => '<path d="M21 12H9"/><polyline points="13 16 9 12 13 8"/><path d="M3 3v18"/>',
             'out'       => '<path d="M3 12h12"/><polyline points="11 8 15 12 11 16"/><path d="M21 3v18"/>',
+            'tag'       => '<path d="M20.59 13.41 12 22l-9-9V3h10l7.59 7.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+            'box'       => '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22" x2="12" y2="12"/>',
+            'folder'    => '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+            'sliders'   => '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+            'ruler'     => '<path d="M16 2 22 8 8 22 2 16z"/><line x1="7" y1="11" x2="9" y2="13"/><line x1="10" y1="8" x2="12" y2="10"/><line x1="13" y1="5" x2="15" y2="7"/>',
             'chevron'   => '<polyline points="6 9 12 15 18 9"/>',
             'menu'      => '<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
             'check'     => '<polyline points="20 6 9 17 4 12"/>',

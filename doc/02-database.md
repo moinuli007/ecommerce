@@ -214,12 +214,38 @@ Asset/Expense → Debit, Liability/Equity/Income → Credit।
 
 ---
 
+---
+
+## ৩. ক্যাটালগ টেবিল (ফেজ ২)
+
+`database/schema/003_catalog.sql` — ৯টি টেবিল। পূর্ণ ব্যাখ্যা [07-catalog.md](07-catalog.md) এ।
+
+| টেবিল | কী রাখে | মনে রাখার মতো |
+|---|---|---|
+| `unit_groups` | Count / Weight / Length | একই গ্রুপের ইউনিটই রূপান্তরযোগ্য |
+| `units` | Piece, Dozen, Kg … | `conversion` = ১ এই ইউনিট → কত বেস; প্রতি গ্রুপে একটাই `is_base` |
+| `categories` | ক্যাটাগরি গাছ | **`path`** = `/1/3/4/` — এক LIKE কোয়েরিতে পুরো শাখা |
+| `attributes` | Size, Color | `code` কোডে রেফার করার জন্য |
+| `attribute_values` | S · M · L · XL · XXL / Navy · White … | `code` SKU তে বসে |
+| `products` | মূল প্রোডাক্ট | `has_variant` ঠিক করে দাম/স্টক কোথায় |
+| `product_variants` | "Navy / XL" | **`signature`** = সাজানো value id, ডুপ্লিকেট আটকায় |
+| `product_variant_values` | ভ্যারিয়েন্ট ↔ ভ্যালু | `product_id` ইচ্ছাকৃতভাবে ডুপ্লিকেট (ফিল্টার দ্রুত হয়) |
+| `product_images` | গ্যালারি | `variant_id > 0` হলে ওই ভ্যারিয়েন্টের ছবি |
+
+দুটো নিয়ম কখনো ভাঙবেন না:
+
+1. **`categories.path` হাতে লিখবেন না** — `CategoryService` বসায়, প্যারেন্ট বদলালে
+   পুরো শাখা নতুন করে হিসাব করে।
+2. **ভ্যারিয়েন্ট হার্ড-ডিলিট নয়** — `isActive = 0`। মুছে ফেললে পুরোনো অর্ডারে
+   "কোন সাইজ ছিল" হারিয়ে যাবে।
+
+---
+
 ## পরের ফেজে যে টেবিলগুলো আসবে
 
-ফেজ ২–৫ এ যোগ হবে (এখনো বানানো হয়নি, শুধু পরিকল্পনা):
+ফেজ ৩–৫ এ যোগ হবে (এখনো বানানো হয়নি, শুধু পরিকল্পনা):
 
 ```
-categories, products, product_variants, product_images, product_prices, units
 customers, addresses, carts, cart_items
 orders, order_items, order_status_log, shipments, couriers
 suppliers, purchases, purchase_items, stock_ledger, stock_adjustments

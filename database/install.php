@@ -27,7 +27,7 @@ use App\Core\Env;
 // ---------------------------------------------------------------------------
 // আর্গুমেন্ট
 // ---------------------------------------------------------------------------
-$options = getopt('', ['email::', 'password::', 'name::', 'phone::', 'skip-admin']);
+$options = getopt('', ['email::', 'password::', 'name::', 'phone::', 'skip-admin', 'demo']);
 
 $adminEmail    = $options['email']    ?? 'admin@ecommerce.moi';
 $adminPassword = $options['password'] ?? 'admin1234';
@@ -55,16 +55,26 @@ echo "✓ ডেটাবেজ প্রস্তুত: $database\n";
 // ---------------------------------------------------------------------------
 // schema + seed
 // ---------------------------------------------------------------------------
-$files = array_merge(
-    glob(__DIR__ . '/schema/*.sql') ?: [],
-    glob(__DIR__ . '/seed/*.sql') ?: []
-);
+$schema = glob(__DIR__ . '/schema/*.sql') ?: [];
+$seed   = glob(__DIR__ . '/seed/*.sql') ?: [];
 
-sort($files);
+sort($schema);
+sort($seed);
 
-foreach ($files as $file) {
+foreach (array_merge($schema, $seed) as $file) {
     runSqlFile($file);
     echo '✓ চালানো হয়েছে: ' . basename($file) . "\n";
+}
+
+// --demo দিলে ডেমো ডেটাও (রেফারেন্স সাইটের ক্যাটাগরি গাছ ইত্যাদি)
+if (isset($options['demo'])) {
+    $demo = glob(__DIR__ . '/demo/*.sql') ?: [];
+    sort($demo);
+
+    foreach ($demo as $file) {
+        runSqlFile($file);
+        echo '✓ ডেমো: ' . basename($file) . "\n";
+    }
 }
 
 // ---------------------------------------------------------------------------

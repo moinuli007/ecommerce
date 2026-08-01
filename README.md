@@ -14,6 +14,8 @@ docker compose exec php php /var/www/html/ecommerce/database/install.php
 তারপর <https://ecommerce.moi/admin/login> — ডিফল্ট লগইন `admin@ecommerce.moi` / `admin1234`
 (লগইন করেই পাসওয়ার্ড বদলে নিন)।
 
+রেফারেন্স সাইটের ক্যাটাগরি গাছটাও চাইলে ইনস্টলারের শেষে `--demo` যোগ করুন।
+
 `ecommerce.moi` কাজ করতে হলে Windows এর `hosts` ফাইলে লাইনটা থাকতে হবে:
 
 ```
@@ -40,6 +42,7 @@ ecommerce/
 │       │   ├── Api/         # payload ফেরত দেয় — HTTP আর web দুই জায়গা থেকেই কল হয়
 │       │   ├── Controllers/ # শুধু ভিউ রেন্ডার
 │       │   └── Views/
+│       ├── Catalog/         # ক্যাটাগরি, প্রোডাক্ট, ভ্যারিয়েন্ট, ইউনিট, সাইজ/রঙ
 │       ├── Dashboard/       # অ্যাডমিন ড্যাশবোর্ড
 │       └── Auth/            # লগইন, প্রোফাইল
 ├── resources/views/         # শেয়ার্ড লেআউট ও পেজ
@@ -63,6 +66,7 @@ ecommerce/
 | [doc/04-routing.md](doc/04-routing.md) | রাউট টেবিল, guard, নতুন রাউট যোগ করার নিয়ম |
 | [doc/05-voucher.md](doc/05-voucher.md) | ভাউচার API রেফারেন্স + প্রতিটি লেনদেনের ডেবিট/ক্রেডিট ম্যাপ |
 | [doc/06-admin-ui.md](doc/06-admin-ui.md) | অ্যাডমিন লেআউট, মেনু, ড্যাশবোর্ড, শেয়ার্ড CSS ক্লাস |
+| [doc/07-catalog.md](doc/07-catalog.md) | ক্যাটাগরি গাছ, ইউনিট রূপান্তর, সাইজ/রঙ, প্রোডাক্ট ও ভ্যারিয়েন্ট |
 
 ## নিয়ম যেগুলো ভাঙা যাবে না
 

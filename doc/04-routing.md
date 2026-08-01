@@ -97,6 +97,38 @@ Router সেটাকে DELETE হিসেবে ধরবে।
 | `GET` | `/api/v1/ledgers/{id}/balance` | admin | `Account\Api\LedgerApi::balance` |
 | `GET` | `/api/v1/reports/trial-balance` | admin | `Account\Api\LedgerApi::trialBalance` |
 
+#### ক্যাটালগ (সবগুলোতে `guard: admin`) — বিস্তারিত [07-catalog.md](07-catalog.md)
+
+| Method | URI | হ্যান্ডলার |
+|---|---|---|
+| `GET` | `/api/v1/categories` | `Catalog\Api\CategoryApi::index` |
+| `GET` | `/api/v1/categories/{id}` | `Catalog\Api\CategoryApi::show` |
+| `POST` | `/api/v1/categories` | `Catalog\Api\CategoryApi::store` |
+| `PUT` | `/api/v1/categories/{id}` | `Catalog\Api\CategoryApi::update` |
+| `DELETE` | `/api/v1/categories/{id}` | `Catalog\Api\CategoryApi::destroy` |
+| `GET` | `/api/v1/units` | `Catalog\Api\UnitApi::index` |
+| `GET` | `/api/v1/units/convert` | `Catalog\Api\UnitApi::convert` |
+| `POST` | `/api/v1/units` | `Catalog\Api\UnitApi::store` |
+| `DELETE` | `/api/v1/units/{id}` | `Catalog\Api\UnitApi::destroy` |
+| `POST` | `/api/v1/unit-groups` | `Catalog\Api\UnitApi::storeGroup` |
+| `DELETE` | `/api/v1/unit-groups/{id}` | `Catalog\Api\UnitApi::destroyGroup` |
+| `GET` | `/api/v1/attributes` | `Catalog\Api\AttributeApi::index` |
+| `POST` | `/api/v1/attributes` | `Catalog\Api\AttributeApi::store` |
+| `DELETE` | `/api/v1/attributes/{id}` | `Catalog\Api\AttributeApi::destroy` |
+| `POST` | `/api/v1/attribute-values` | `Catalog\Api\AttributeApi::storeValue` |
+| `DELETE` | `/api/v1/attribute-values/{id}` | `Catalog\Api\AttributeApi::destroyValue` |
+| `GET` | `/api/v1/products` | `Catalog\Api\ProductApi::index` |
+| `GET` | `/api/v1/products/form-data` | `Catalog\Api\ProductApi::formData` |
+| `GET` | `/api/v1/products/slug/{slug}` | `Catalog\Api\ProductApi::showBySlug` |
+| `GET` | `/api/v1/products/{id}` | `Catalog\Api\ProductApi::show` |
+| `POST` | `/api/v1/products` | `Catalog\Api\ProductApi::store` |
+| `PUT` | `/api/v1/products/{id}` | `Catalog\Api\ProductApi::update` |
+| `DELETE` | `/api/v1/products/{id}` | `Catalog\Api\ProductApi::destroy` |
+| `POST` | `/api/v1/products/{id}/variants` | `Catalog\Api\ProductApi::syncVariants` |
+| `POST` | `/api/v1/products/{id}/images` | `Catalog\Api\ProductApi::addImage` |
+| `PUT` | `/api/v1/variants/{id}` | `Catalog\Api\ProductApi::updateVariant` |
+| `DELETE` | `/api/v1/images/{id}` | `Catalog\Api\ProductApi::deleteImage` |
+
 ### Admin — `/admin/*` (রেসপন্স HTML)
 
 | Method | URI | guard | হ্যান্ডলার |
@@ -106,6 +138,12 @@ Router সেটাকে DELETE হিসেবে ধরবে।
 | `GET`/`POST` | `/admin/logout` | guest | `Auth\Controllers\LoginController::logout` |
 | `GET` | `/admin` | admin | `Dashboard\Controllers\DashboardController::index` |
 | `GET` | `/admin/profile` | admin | `Auth\Controllers\ProfileController::show` |
+| `GET` | `/admin/products` | admin | `Catalog\Controllers\CatalogController::products` |
+| `GET` | `/admin/products/create` | admin | `Catalog\Controllers\CatalogController::productCreate` |
+| `GET` | `/admin/products/{id}/edit` | admin | `Catalog\Controllers\CatalogController::productEdit` |
+| `GET` | `/admin/categories` | admin | `Catalog\Controllers\CatalogController::categories` |
+| `GET` | `/admin/attributes` | admin | `Catalog\Controllers\CatalogController::attributes` |
+| `GET` | `/admin/units` | admin | `Catalog\Controllers\CatalogController::units` |
 | `GET` | `/admin/vouchers` | admin | `Account\Controllers\VoucherController::index` |
 | `GET` | `/admin/vouchers/entry` | admin | `Account\Controllers\VoucherController::entry` |
 | `GET` | `/admin/vouchers/{id}` | admin | `Account\Controllers\VoucherController::show` |

@@ -363,6 +363,63 @@ $initial  = mb_substr((string) ($user['name'] ?? '?'), 0, 1);
 </div>
 
 <script>
+// ---------------------------------------------------------------------------
+// সব অ্যাডমিন পেজের শেয়ার্ড API হেল্পার।
+// রেসপন্সের `m` মেসেজগুলো নিজে থেকেই দেখায়, `status !== 1` হলে null দেয়।
+// ব্যবহার:  const data = await api('/products', {name: '...'}, 'POST');
+// ---------------------------------------------------------------------------
+window.API_BASE = '<?= View::e($appUrl) ?>/api/v1';
+
+window.api = async function (path, body, method) {
+    method = method || (body ? 'POST' : 'GET');
+
+    let data;
+
+    try {
+        const response = await fetch(window.API_BASE + path, {
+            method:      method,
+            headers:     { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body:        body ? JSON.stringify(body) : undefined
+        });
+
+        if (response.status === 401) {
+            location.href = '<?= View::e($appUrl) ?>/admin/login';
+            return null;
+        }
+
+        data = await response.json();
+    } catch (error) {
+        window.toast('e', 'রিকোয়েস্ট পাঠানো যায়নি: ' + error.message);
+        return null;
+    }
+
+    (data.m || []).forEach(function (m) { window.toast(m[0], m[1]); });
+
+    return data.status === 1 ? data : null;
+};
+
+// স্ক্রিনের ডান-নিচে ভাসমান মেসেজ
+window.toast = function (type, text) {
+    let box = document.getElementById('toast-box');
+
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'toast-box';
+        box.style.cssText = 'position:fixed;right:1rem;bottom:1rem;z-index:60;display:flex;'
+                          + 'flex-direction:column;gap:.5rem;max-width:min(360px,90vw)';
+        document.body.appendChild(box);
+    }
+
+    const item = document.createElement('div');
+    item.className = 'msg msg-' + type;
+    item.style.boxShadow = 'var(--shadow)';
+    item.textContent = text;
+    box.appendChild(item);
+
+    setTimeout(function () { item.remove(); }, 5000);
+};
+
 (function () {
     var body = document.body;
 
