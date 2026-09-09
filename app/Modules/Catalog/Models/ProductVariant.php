@@ -74,11 +74,15 @@ final class ProductVariant extends Model
         return $out;
     }
 
-    /** প্রোডাক্টের সব ভ্যারিয়েন্টের স্টকের যোগফল */
+    /**
+     * প্রোডাক্টের সব ভ্যারিয়েন্টের স্টকের যোগফল — isActive নির্বিশেষে
+     * (নিষ্ক্রিয় ভ্যারিয়েন্টের স্টকও বাস্তবে গুদামে আছে, শুধু ওই কম্বিনেশন
+     * আর বিক্রির জন্য দেখানো হয় না — doc/07-catalog.md §৪)।
+     */
     public static function totalStock(int $productId): float
     {
         return (float) DB::scalar(
-            'SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ? AND isActive = 1',
+            'SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ?',
             [$productId],
             0
         );

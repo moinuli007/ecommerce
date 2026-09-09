@@ -93,7 +93,7 @@ final class LedgerApi
         $chart = ChartOfAccount::find(Request::int('chart_id'));
 
         if ($chart === []) {
-            return Response::error('চার্ট অব অ্যাকাউন্ট পাওয়া যায়নি।');
+            return Response::error('Chart of account not found.');
         }
 
         try {
@@ -110,7 +110,7 @@ final class LedgerApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('লেজার তৈরি হয়েছে।', ['ledger' => Ledger::find($ledgerId)]);
+        return Response::success('Ledger created.', ['ledger' => Ledger::find($ledgerId)]);
     }
 
     /**

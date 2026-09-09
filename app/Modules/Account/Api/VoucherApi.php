@@ -72,7 +72,7 @@ final class VoucherApi
         $voucher   = VoucherDetails::byId($voucherId);
 
         if ($voucher === []) {
-            return Response::error('ভাউচার পাওয়া যায়নি।');
+            return Response::error('Voucher not found.');
         }
 
         return Response::success('', ['voucher' => $voucher]);
@@ -88,7 +88,7 @@ final class VoucherApi
         $voucher = VoucherDetails::byCode((string) Request::param('code', ''));
 
         if ($voucher === []) {
-            return Response::error('ভাউচার পাওয়া যায়নি।');
+            return Response::error('Voucher not found.');
         }
 
         return Response::success('', ['voucher' => $voucher]);
@@ -110,11 +110,11 @@ final class VoucherApi
         $type = self::resolveType(Request::int('type'));
 
         if ($type === null) {
-            return Response::error('ভাউচারের ধরন সঠিক নয়।');
+            return Response::error('Invalid voucher type.');
         }
 
         if (!$type->isManual()) {
-            return Response::error($type->label() . ' ভাউচার হাতে তৈরি করা যায় না — এটি সিস্টেম নিজেই তৈরি করে।');
+            return Response::error($type->label() . ' vouchers cannot be created manually — the system creates them itself.');
         }
 
         $lines = Request::array('lines');
@@ -155,7 +155,7 @@ final class VoucherApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ভাউচার সংরক্ষণ হয়েছে।', [
+        return Response::success('Voucher saved.', [
             'voucher_id' => $voucherId,
             'voucher'    => VoucherDetails::byId($voucherId),
         ]);
@@ -172,7 +172,7 @@ final class VoucherApi
         $type = self::resolveType(Request::int('type'));
 
         if ($type === null || !$type->isOpening()) {
-            return Response::error('ওপেনিং ভাউচারের ধরন সঠিক নয়।');
+            return Response::error('Invalid opening voucher type.');
         }
 
         if (!Validator::check(Request::all(), [
@@ -197,7 +197,7 @@ final class VoucherApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ওপেনিং ব্যালেন্স সংরক্ষণ হয়েছে।', [
+        return Response::success('Opening balance saved.', [
             'voucher_id' => $voucherId,
             'voucher'    => VoucherDetails::byId($voucherId),
         ]);
@@ -214,13 +214,13 @@ final class VoucherApi
         $existing  = VoucherDetails::byId($voucherId);
 
         if ($existing === []) {
-            return Response::error('ভাউচার পাওয়া যায়নি।');
+            return Response::error('Voucher not found.');
         }
 
         $type = VoucherType::tryFrom($existing['type_id']);
 
         if ($type === null || !$type->isManual()) {
-            return Response::error('সিস্টেমের তৈরি ভাউচার এডিট করা যাবে না — সোর্স ডকুমেন্ট থেকে বদলান।');
+            return Response::error('System-generated vouchers cannot be edited — change it from the source document.');
         }
 
         try {
@@ -236,7 +236,7 @@ final class VoucherApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ভাউচার আপডেট হয়েছে।', [
+        return Response::success('Voucher updated.', [
             'voucher' => VoucherDetails::byId($voucherId),
         ]);
     }
@@ -252,22 +252,22 @@ final class VoucherApi
         $existing  = VoucherDetails::byId($voucherId);
 
         if ($existing === []) {
-            return Response::error('ভাউচার পাওয়া যায়নি।');
+            return Response::error('Voucher not found.');
         }
 
         $type = VoucherType::tryFrom($existing['type_id']);
 
         if ($type === null || !$type->isManual()) {
-            return Response::error('সিস্টেমের তৈরি ভাউচার ডিলিট করা যাবে না — সোর্স ডকুমেন্ট বাতিল করুন।');
+            return Response::error('System-generated vouchers cannot be deleted — cancel the source document instead.');
         }
 
         if (!Auth::isAdmin()) {
-            return Response::error('ভাউচার ডিলিট করার অনুমতি নাই।');
+            return Response::error('You do not have permission to delete vouchers.');
         }
 
         Voucher::delete($voucherId);
 
-        return Response::success('ভাউচার ডিলিট হয়েছে।', ['voucher_id' => $voucherId]);
+        return Response::success('Voucher deleted.', ['voucher_id' => $voucherId]);
     }
 
     /**
@@ -322,7 +322,7 @@ final class VoucherApi
         }
 
         if ($out === []) {
-            Message::error('ভাউচারের কোনো লাইন পাওয়া যায়নি।');
+            Message::error('No voucher lines were found.');
         }
 
         return $out;

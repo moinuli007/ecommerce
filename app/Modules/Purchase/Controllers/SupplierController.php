@@ -21,7 +21,7 @@ final class SupplierController
         $payload = SupplierApi::index();
 
         return View::layout('layouts/admin', 'Purchase::supplier/list', [
-            'title'     => 'সাপ্লায়ার',
+            'title'     => 'Suppliers',
             'suppliers' => $payload['suppliers'] ?? [],
             'filters'   => ['q' => Request::string('q')],
             'messages'  => $payload['m'] ?? [],
@@ -49,7 +49,7 @@ final class SupplierController
         }
 
         return View::layout('layouts/admin', 'Purchase::supplier/form', [
-            'title'    => $supplierId > 0 ? 'সাপ্লায়ার এডিট' : 'নতুন সাপ্লায়ার',
+            'title'    => $supplierId > 0 ? 'Edit Supplier' : 'New Supplier',
             'supplier' => $supplier,
             'messages' => [],
         ]);

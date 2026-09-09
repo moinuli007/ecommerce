@@ -105,6 +105,22 @@ final class Request
         return is_array($value) ? $value : ($value === null || $value === '' ? [] : [$value]);
     }
 
+    /**
+     * $_FILES এর একটা এন্ট্রি — ফাইল না থাকলে/এরর হলে খালি array।
+     *
+     * @return array<string,mixed>
+     */
+    public static function file(string $key): array
+    {
+        $file = $_FILES[$key] ?? [];
+
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return [];
+        }
+
+        return $file;
+    }
+
     public static function header(string $name, string $default = ''): string
     {
         $key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));

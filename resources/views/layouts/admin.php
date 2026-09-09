@@ -34,7 +34,7 @@ $crumb    = Menu::locate($current);
 $initial  = mb_substr((string) ($user['name'] ?? '?'), 0, 1);
 ?>
 <!doctype html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -264,26 +264,26 @@ $initial  = mb_substr((string) ($user['name'] ?? '?'), 0, 1);
             <span class="logo-mark"><?= View::e(mb_substr((string) ($appName ?? 'E'), 0, 1)) ?></span>
             <span class="logo-text"><?= View::e($appName ?? '') ?></span>
         </a>
-        <button id="toggle-btn" type="button" title="সাইডবার ছোট/বড় করুন" aria-label="সাইডবার টগল">
+        <button id="toggle-btn" type="button" title="Collapse/expand sidebar" aria-label="Toggle sidebar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
         </button>
     </div>
 
-    <button id="mobile-btn" class="nav-box" type="button" aria-label="মেনু"><?= Menu::icon('menu') ?></button>
+    <button id="mobile-btn" class="nav-box" type="button" aria-label="Menu"><?= Menu::icon('menu') ?></button>
 
     <ul class="user-menu">
         <li>
-            <button class="nav-box" id="lang-btn" type="button" title="ভাষা">বাং</button>
+            <button class="nav-box" id="lang-btn" type="button" title="Language">EN</button>
         </li>
         <li>
-            <button class="nav-box" id="theme-btn" type="button" title="লাইট/ডার্ক">
+            <button class="nav-box" id="theme-btn" type="button" title="Light/Dark">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
         </li>
         <li>
-            <button class="nav-box" id="fullscreen-btn" type="button" title="ফুলস্ক্রিন">
+            <button class="nav-box" id="fullscreen-btn" type="button" title="Fullscreen">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
             </button>
@@ -294,7 +294,7 @@ $initial  = mb_substr((string) ($user['name'] ?? '?'), 0, 1);
                 <span class="user-letter"><?= View::e($initial) ?></span>
                 <span class="user-detail">
                     <span class="user-name"><?= View::e($user['name'] ?? '') ?></span>
-                    <span class="user-role"><?= Auth::isSuperAdmin() ? 'সুপার অ্যাডমিন' : 'স্টাফ' ?></span>
+                    <span class="user-role"><?= Auth::isSuperAdmin() ? 'Super Admin' : 'Staff' ?></span>
                 </span>
                 <?= Menu::icon('chevron') ?>
             </button>
@@ -343,8 +343,8 @@ $initial  = mb_substr((string) ($user['name'] ?? '?'), 0, 1);
             <div>
                 <h1><?= View::e($title ?? '') ?></h1>
                 <div class="breadcrumb">
-                    <a href="<?= View::e($appUrl . '/admin') ?>">ড্যাশবোর্ড</a>
-                    <?php if ($crumb !== null && $crumb['label'] !== 'ড্যাশবোর্ড'): ?>
+                    <a href="<?= View::e($appUrl . '/admin') ?>">Dashboard</a>
+                    <?php if ($crumb !== null && $crumb['label'] !== 'Dashboard'): ?>
                         &rsaquo; <?= View::e($crumb['group']) ?> &rsaquo; <?= View::e($crumb['label']) ?>
                     <?php endif; ?>
                 </div>
@@ -390,7 +390,40 @@ window.api = async function (path, body, method) {
 
         data = await response.json();
     } catch (error) {
-        window.toast('e', 'রিকোয়েস্ট পাঠানো যায়নি: ' + error.message);
+        window.toast('e', 'Could not send the request: ' + error.message);
+        return null;
+    }
+
+    (data.m || []).forEach(function (m) { window.toast(m[0], m[1]); });
+
+    return data.status === 1 ? data : null;
+};
+
+// ফাইল আপলোডের জন্য — একই আচরণ, কিন্তু body FormData (Content-Type হেডার
+// নিজে বসাবেন না, ব্রাউজার multipart boundary নিজে বসায়)।
+// ব্যবহার:  const fd = new FormData(); fd.append('image', file);
+//           const data = await apiUpload('/products/5/images', fd);
+window.apiUpload = async function (path, formData, method) {
+    method = method || 'POST';
+
+    let data;
+
+    try {
+        const response = await fetch(window.API_BASE + path, {
+            method:      method,
+            headers:     { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body:        formData
+        });
+
+        if (response.status === 401) {
+            location.href = '<?= View::e($appUrl) ?>/admin/login';
+            return null;
+        }
+
+        data = await response.json();
+    } catch (error) {
+        window.toast('e', 'Could not send the request: ' + error.message);
         return null;
     }
 
@@ -481,7 +514,7 @@ window.toast = function (type, text) {
 
     // ---- ভাষা (ফেজ ৭-এ আসল ইমপ্লিমেন্টেশন হবে)
     document.getElementById('lang-btn').addEventListener('click', function () {
-        alert('ভাষা টগল ফেজ ৭-এ যুক্ত হবে।');
+        alert('Language toggle is coming in Phase 7.');
     });
 })();
 </script>

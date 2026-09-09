@@ -20,7 +20,7 @@ final class LedgerController
         $payload = LedgerApi::tree();
 
         return View::layout('layouts/admin', 'Account::ledger/tree', [
-            'title'    => 'চার্ট অব অ্যাকাউন্টস',
+            'title'    => 'Chart of Accounts',
             'tree'     => $payload['tree'] ?? [],
             'messages' => $payload['m'] ?? [],
         ]);
@@ -33,7 +33,7 @@ final class LedgerController
         $payload = LedgerApi::statement();
 
         return View::layout('layouts/admin', 'Account::ledger/statement', [
-            'title'     => 'লেজার স্টেটমেন্ট',
+            'title'     => 'Ledger Statement',
             'statement' => $payload,
             'filters'   => ['from' => Request::string('from'), 'to' => Request::string('to')],
             'messages'  => $payload['m'] ?? [],
@@ -47,7 +47,7 @@ final class LedgerController
         $payload = LedgerApi::trialBalance();
 
         return View::layout('layouts/admin', 'Account::ledger/trial-balance', [
-            'title'    => 'ট্রায়াল ব্যালেন্স',
+            'title'    => 'Trial Balance',
             'report'   => $payload,
             'filters'  => ['from' => Request::string('from'), 'to' => Request::string('to')],
             'messages' => $payload['m'] ?? [],

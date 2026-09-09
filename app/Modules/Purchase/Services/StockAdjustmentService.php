@@ -60,7 +60,7 @@ final class StockAdjustmentService
         $adj = StockAdjustment::find($id);
 
         if ($adj === []) {
-            throw new RuntimeException('সমন্বয় এন্ট্রি পাওয়া যায়নি।');
+            throw new RuntimeException('Adjustment entry not found.');
         }
 
         [$reason, $items, $meta] = self::validate($data);
@@ -209,13 +209,13 @@ final class StockAdjustmentService
             StockAdjustment::REASON_DAMAGE,
             StockAdjustment::REASON_COUNT,
         ], true)) {
-            throw new RuntimeException('সমন্বয়ের কারণ সঠিক নয়।');
+            throw new RuntimeException('Invalid adjustment reason.');
         }
 
         $rawItems = $data['items'] ?? [];
 
         if (!is_array($rawItems) || $rawItems === []) {
-            throw new RuntimeException('অন্তত একটা লাইন যোগ করুন।');
+            throw new RuntimeException('Add at least one line.');
         }
 
         $items = [];
@@ -229,29 +229,29 @@ final class StockAdjustmentService
             $product = Product::find($productId);
 
             if ($product === []) {
-                throw new RuntimeException('একটা লাইনের প্রোডাক্ট পাওয়া যায়নি।');
+                throw new RuntimeException('A line\'s product was not found.');
             }
 
             if ($variantId > 0) {
                 $variant = ProductVariant::find($variantId);
 
                 if ($variant === [] || (int) $variant['product_id'] !== $productId) {
-                    throw new RuntimeException("'{$product['name']}' এর ভ্যারিয়েন্ট মেলেনি।");
+                    throw new RuntimeException("'{$product['name']}' variant does not match.");
                 }
             } elseif ((int) $product['has_variant'] === 1) {
-                throw new RuntimeException("'{$product['name']}' ভ্যারিয়েন্ট প্রোডাক্ট — ভ্যারিয়েন্ট বাছাই করুন।");
+                throw new RuntimeException("'{$product['name']}' is a variant product — please choose a variant.");
             }
 
             if ($qty == 0.0) {
-                throw new RuntimeException("'{$product['name']}' এর পরিমাণ শূন্য হতে পারবে না।");
+                throw new RuntimeException("Quantity for '{$product['name']}' cannot be zero.");
             }
 
             if ($reason === StockAdjustment::REASON_OPENING && $qty < 0) {
-                throw new RuntimeException('ওপেনিং স্টক ঋণাত্মক হতে পারবে না।');
+                throw new RuntimeException('Opening stock cannot be negative.');
             }
 
             if ($rate < 0) {
-                throw new RuntimeException("'{$product['name']}' এর মূল্য ঋণাত্মক হতে পারবে না।");
+                throw new RuntimeException("Rate for '{$product['name']}' cannot be negative.");
             }
 
             $items[] = [
@@ -384,7 +384,7 @@ final class StockAdjustmentService
 
             if ($onHand - (float) $line['qty'] < -0.0001) {
                 throw new RuntimeException(
-                    'এই সমন্বয়ের কিছু স্টক ইতিমধ্যে ব্যবহার হয়ে গেছে — এখন এডিট/ডিলিট করলে স্টক ঋণাত্মক হবে।'
+                    'Some of this adjustment\'s stock has already been used — editing/deleting now would make the stock negative.'
                 );
             }
         }

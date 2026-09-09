@@ -190,7 +190,7 @@ final class Router
             [$class, $method] = $handler;
 
             if (!method_exists($class, $method)) {
-                throw new RuntimeException("রাউট হ্যান্ডলার পাওয়া যায়নি: $class::$method()");
+                throw new RuntimeException("Route handler not found: $class::$method()");
             }
 
             return $class::$method();
@@ -209,13 +209,13 @@ final class Router
             'auth'     => Auth::check() ? null : 401,
             'admin'    => Auth::check() ? (Auth::isAdmin() ? null : 403) : 401,
             'customer' => Auth::check() ? (Auth::isCustomer() ? null : 403) : 401,
-            default    => throw new RuntimeException("অজানা guard: $guard"),
+            default    => throw new RuntimeException("Unknown guard: $guard"),
         };
     }
 
     private static function deny(int $code, bool $wantJson): void
     {
-        $message = $code === 401 ? 'লগইন প্রয়োজন।' : 'এই কাজের অনুমতি নাই।';
+        $message = $code === 401 ? 'Login required.' : 'You do not have permission for this action.';
 
         if ($wantJson) {
             Message::error($message);
@@ -223,7 +223,7 @@ final class Router
         }
 
         if ($code === 401) {
-            Message::flash(Message::WARNING, 'চালিয়ে যেতে লগইন করুন।');
+            Message::flash(Message::WARNING, 'Please log in to continue.');
 
             // যে এলাকা থেকে এসেছে সেই এলাকার লগইন পেজেই ফিরবে —
             // /admin/* এর জন্য /admin/login, স্টোরফ্রন্টের জন্য /login
@@ -264,7 +264,7 @@ final class Router
         error_log('[router] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
 
         if ($wantJson) {
-            Message::error($debug ? $e->getMessage() : 'সার্ভারে সমস্যা হয়েছে।');
+            Message::error($debug ? $e->getMessage() : 'Something went wrong on the server.');
 
             if ($debug) {
                 Response::set('_exception', [
@@ -281,7 +281,7 @@ final class Router
         http_response_code(500);
         echo $debug
             ? '<pre>' . htmlspecialchars($e->getMessage() . "\n" . $e->getTraceAsString()) . '</pre>'
-            : 'সার্ভারে সমস্যা হয়েছে।';
+            : 'Something went wrong on the server.';
     }
 
     // -------------------------------------------------------------------------
@@ -295,7 +295,7 @@ final class Router
     public static function url(string $name, array $params = []): string
     {
         if (!isset(self::$names[$name])) {
-            throw new RuntimeException("রাউট নাম পাওয়া যায়নি: $name");
+            throw new RuntimeException("Route name not found: $name");
         }
 
         $uri = self::$names[$name]['uri'];

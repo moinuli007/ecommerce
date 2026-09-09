@@ -62,51 +62,51 @@ final class DashboardApi
             'stats' => [
                 [
                     'key'   => 'cash',
-                    'label' => 'ক্যাশ ইন হ্যান্ড',
+                    'label' => 'Cash in Hand',
                     'value' => $cash,
                     'icon'  => 'wallet',
                     'tone'  => $cash < 0 ? 'danger' : 'brand',
                 ],
                 [
                     'key'   => 'bank',
-                    'label' => 'ব্যাংক + মোবাইল ব্যাংকিং',
+                    'label' => 'Bank + Mobile Banking',
                     'value' => $bank,
                     'icon'  => 'wallet',
                     'tone'  => 'info',
                 ],
                 [
                     'key'   => 'receivable',
-                    'label' => 'কাস্টমারের কাছে পাওনা',
+                    'label' => 'Receivable from Customers',
                     'value' => $received,
                     'icon'  => 'in',
                     'tone'  => 'success',
                 ],
                 [
                     'key'   => 'payable',
-                    'label' => 'সাপ্লায়ারকে দেনা',
+                    'label' => 'Payable to Suppliers',
                     'value' => $payable,
                     'icon'  => 'out',
                     'tone'  => 'warning',
                 ],
                 [
                     'key'   => 'sales_month',
-                    'label' => 'এ মাসের বিক্রি',
+                    'label' => 'Sales This Month',
                     'value' => $salesThisMonth,
                     'icon'  => 'trend-up',
                     'tone'  => 'success',
                 ],
                 [
                     'key'   => 'expense_month',
-                    'label' => 'এ মাসের খরচ',
+                    'label' => 'Expense This Month',
                     'value' => $expenseThisMonth,
                     'icon'  => 'trend-down',
                     'tone'  => 'danger',
                 ],
             ],
             'pending' => [
-                ['label' => 'কুরিয়ারে আটকে থাকা COD', 'value' => $codPending],
-                ['label' => 'গেটওয়েতে জমা',            'value' => $gatewayPending],
-                ['label' => 'স্টকের মূল্য',             'value' => $inventory],
+                ['label' => 'COD Stuck at Courier', 'value' => $codPending],
+                ['label' => 'Pending at Gateway',   'value' => $gatewayPending],
+                ['label' => 'Stock Value',          'value' => $inventory],
             ],
             'daily_sales'     => AccountSummary::dailySales(14),
             'master_summary'  => AccountSummary::byMaster(),
@@ -126,11 +126,11 @@ final class DashboardApi
         $hour = (int) date('G');
 
         return match (true) {
-            $hour < 6  => 'শুভ রাত্রি',
-            $hour < 12 => 'শুভ সকাল',
-            $hour < 16 => 'শুভ দুপুর',
-            $hour < 19 => 'শুভ বিকাল',
-            default    => 'শুভ সন্ধ্যা',
+            $hour < 6  => 'Good Night',
+            $hour < 12 => 'Good Morning',
+            $hour < 16 => 'Good Afternoon',
+            $hour < 19 => 'Good Evening',
+            default    => 'Good Evening',
         };
     }
 }

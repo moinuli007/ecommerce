@@ -36,7 +36,7 @@ final class AttributeApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('অ্যাট্রিবিউট সংরক্ষণ হয়েছে।', ['attribute' => Attribute::find($id)]);
+        return Response::success('Attribute saved.', ['attribute' => Attribute::find($id)]);
     }
 
     /** DELETE /api/v1/attributes/{id} */
@@ -48,7 +48,7 @@ final class AttributeApi
             return Response::error($e->getMessage());
         }
 
-        return $done ? Response::success('অ্যাট্রিবিউট ডিলিট হয়েছে।') : Response::error('পাওয়া যায়নি।');
+        return $done ? Response::success('Attribute deleted.') : Response::error('Not found.');
     }
 
     /** POST /api/v1/attribute-values */
@@ -67,7 +67,7 @@ final class AttributeApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ভ্যালু সংরক্ষণ হয়েছে।', ['value' => AttributeValue::find($id)]);
+        return Response::success('Value saved.', ['value' => AttributeValue::find($id)]);
     }
 
     /** DELETE /api/v1/attribute-values/{id} */
@@ -79,6 +79,6 @@ final class AttributeApi
             return Response::error($e->getMessage());
         }
 
-        return $done ? Response::success('ভ্যালু ডিলিট হয়েছে।') : Response::error('পাওয়া যায়নি।');
+        return $done ? Response::success('Value deleted.') : Response::error('Not found.');
     }
 }

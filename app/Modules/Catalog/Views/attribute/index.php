@@ -24,11 +24,11 @@ use App\Core\View;
 
 <div class="card">
     <p class="muted" style="margin:0">
-        অ্যাট্রিবিউট দিয়েই প্রোডাক্টের ভ্যারিয়েন্ট তৈরি হয় — যেমন Size (S/M/L/XL/XXL) আর Color।
-        প্রোডাক্ট ফর্মে ভ্যালুগুলো বেছে দিলে সব কম্বিনেশন নিজে থেকেই তৈরি হয়ে যাবে।
+        Attributes are what generate product variants — like Size (S/M/L/XL/XXL) and Color.
+        Pick values on the product form and every combination is generated automatically.
         <br>
-        <strong>খেয়াল রাখবেন:</strong> কোনো ভ্যালু একবার ভ্যারিয়েন্টে ব্যবহৃত হলে সেটা আর ডিলিট করা যাবে না
-        (পুরোনো অর্ডারে কোন সাইজ ছিল সেটা হারিয়ে যেত) — তখন শুধু নিষ্ক্রিয় করা যায়।
+        <strong>Note:</strong> once a value is used by a variant it can't be deleted
+        (old orders would lose which size they had) — you can only deactivate it.
     </p>
 </div>
 
@@ -38,11 +38,11 @@ use App\Core\View;
             <h2><?= View::e($attribute['name']) ?></h2>
             <code class="muted"><?= View::e($attribute['code']) ?></code>
             <span class="pill"><?= View::e($attribute['type']) ?></span>
-            <span class="muted" style="margin-left:auto"><?= count($attribute['values']) ?> টি ভ্যালু</span>
+            <span class="muted" style="margin-left:auto"><?= count($attribute['values']) ?> values</span>
         </div>
 
         <?php if ($attribute['values'] === []): ?>
-            <p class="muted">কোনো ভ্যালু নাই।</p>
+            <p class="muted">No values yet.</p>
         <?php else: ?>
             <div class="chips">
                 <?php foreach ($attribute['values'] as $value): ?>
@@ -52,7 +52,7 @@ use App\Core\View;
                         <?php endif; ?>
                         <?= View::e($value['value']) ?>
                         <code class="muted" style="font-size:.72rem"><?= View::e($value['code']) ?></code>
-                        <span class="x" data-del-value="<?= (int) $value['id'] ?>" title="ডিলিট">×</span>
+                        <span class="x" data-del-value="<?= (int) $value['id'] ?>" title="Delete">×</span>
                     </span>
                 <?php endforeach; ?>
             </div>
@@ -60,48 +60,48 @@ use App\Core\View;
 
         <form class="add-row" data-attribute="<?= (int) $attribute['id'] ?>">
             <div>
-                <label>নতুন ভ্যালু</label>
+                <label>New Value</label>
                 <input name="value" required maxlength="100"
-                       placeholder="<?= $attribute['code'] === 'size' ? 'যেমন XXL' : 'যেমন Navy' ?>">
+                       placeholder="<?= $attribute['code'] === 'size' ? 'e.g. XXL' : 'e.g. Navy' ?>">
             </div>
             <div>
-                <label>কোড <span class="muted">(SKU তে বসে)</span></label>
+                <label>Code <span class="muted">(used in SKU)</span></label>
                 <input name="code" maxlength="50" placeholder="<?= $attribute['code'] === 'size' ? 'XXL' : 'NVY' ?>">
             </div>
             <?php if ($attribute['type'] === 'color'): ?>
                 <div>
-                    <label>রঙ</label>
+                    <label>Color</label>
                     <input name="color_hex" type="color" value="#1f2a44" style="padding:.2rem;height:36px;width:56px">
                 </div>
             <?php endif; ?>
             <div>
-                <label>ক্রম</label>
+                <label>Order</label>
                 <input name="sort_order" type="number" value="<?= count($attribute['values']) + 1 ?>" style="max-width:80px">
             </div>
-            <button type="submit">যোগ করুন</button>
+            <button type="submit">Add</button>
         </form>
     </div>
 <?php endforeach; ?>
 
 <div class="card">
-    <h2 class="card-title">নতুন অ্যাট্রিবিউট</h2>
+    <h2 class="card-title">New Attribute</h2>
     <form id="attr-form" class="add-row">
         <div>
-            <label>নাম</label>
-            <input name="name" required maxlength="100" placeholder="যেমন Fit">
+            <label>Name</label>
+            <input name="name" required maxlength="100" placeholder="e.g. Fit">
         </div>
         <div>
-            <label>কোড</label>
+            <label>Code</label>
             <input name="code" maxlength="30" placeholder="fit">
         </div>
         <div>
-            <label>ধরন</label>
+            <label>Type</label>
             <select name="type">
-                <option value="select">সাধারণ (select)</option>
-                <option value="color">রঙ (color swatch)</option>
+                <option value="select">Standard (select)</option>
+                <option value="color">Color (swatch)</option>
             </select>
         </div>
-        <button type="submit">যোগ করুন</button>
+        <button type="submit">Add</button>
     </form>
 </div>
 
@@ -122,7 +122,7 @@ use App\Core\View;
     // ভ্যালু ডিলিট
     document.querySelectorAll('[data-del-value]').forEach(function (x) {
         x.addEventListener('click', async function () {
-            if (!confirm('এই ভ্যালুটা ডিলিট করবেন?')) { return; }
+            if (!confirm('Delete this value?')) { return; }
 
             if (await api('/attribute-values/' + this.dataset.delValue, null, 'DELETE')) {
                 location.reload();

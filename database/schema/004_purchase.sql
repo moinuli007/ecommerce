@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS `purchase_items` (
   `qty`          DECIMAL(20,4)   NOT NULL DEFAULT 0.0000 COMMENT 'ইনপুট ইউনিটে',
   `qty_base`     DECIMAL(20,4)   NOT NULL DEFAULT 0.0000 COMMENT 'বেস ইউনিটে',
   `unit_price`   DECIMAL(20,4)   NOT NULL DEFAULT 0.0000 COMMENT 'প্রতি ইনপুট ইউনিটে ল্যান্ডেড ক্রয়মূল্য',
+  `sale_price`   DECIMAL(20,4)   NOT NULL DEFAULT 0.0000 COMMENT '0 = অপরিবর্তিত; >0 হলে সেভের সময় প্রোডাক্ট/ভ্যারিয়েন্টের sale_price ওভাররাইট করে',
   `line_total`   DECIMAL(20,4)   NOT NULL DEFAULT 0.0000 COMMENT 'qty × unit_price',
   PRIMARY KEY (`id`),
   KEY `ix_pi_purchase` (`purchase_id`),

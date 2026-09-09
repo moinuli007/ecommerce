@@ -109,7 +109,7 @@ final class QueryBuilder
     public function whereBetween(string $column, array $range): self
     {
         if (count($range) !== 2) {
-            throw new InvalidArgumentException('whereBetween() এ ঠিক দুইটা ভ্যালু লাগবে।');
+            throw new InvalidArgumentException('whereBetween() requires exactly two values.');
         }
 
         $this->wheres[]   = "`" . str_replace('.', '`.`', $column) . "` BETWEEN ? AND ?";

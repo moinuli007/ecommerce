@@ -29,7 +29,7 @@ final class CatalogController
         $payload = CategoryApi::index();
 
         return View::layout('layouts/admin', 'Catalog::category/index', [
-            'title'    => 'ক্যাটাগরি',
+            'title'    => 'Categories',
             'tree'     => $payload['tree'] ?? [],
             'options'  => $payload['options'] ?? [],
             'messages' => $payload['m'] ?? [],
@@ -47,7 +47,7 @@ final class CatalogController
         $payload = UnitApi::index();
 
         return View::layout('layouts/admin', 'Catalog::unit/index', [
-            'title'    => 'ইউনিট',
+            'title'    => 'Units',
             'groups'   => $payload['groups'] ?? [],
             'messages' => $payload['m'] ?? [],
         ]);
@@ -64,7 +64,7 @@ final class CatalogController
         $payload = AttributeApi::index();
 
         return View::layout('layouts/admin', 'Catalog::attribute/index', [
-            'title'      => 'সাইজ ও অন্যান্য অ্যাট্রিবিউট',
+            'title'      => 'Size & Other Attributes',
             'attributes' => $payload['attributes'] ?? [],
             'messages'   => $payload['m'] ?? [],
         ]);
@@ -83,7 +83,7 @@ final class CatalogController
         $form = ProductApi::formData();
 
         return View::layout('layouts/admin', 'Catalog::product/list', [
-            'title'      => 'প্রোডাক্ট',
+            'title'      => 'Products',
             'products'   => $payload['products'] ?? [],
             'pagination' => $payload['pagination'] ?? [],
             'categories' => $form['categories'] ?? [],
@@ -122,7 +122,7 @@ final class CatalogController
         }
 
         return View::layout('layouts/admin', 'Catalog::product/form', [
-            'title'      => $productId > 0 ? 'প্রোডাক্ট এডিট' : 'নতুন প্রোডাক্ট',
+            'title'      => $productId > 0 ? 'Edit Product' : 'New Product',
             'product'    => $product,
             'categories' => $form['categories'] ?? [],
             'units'      => $form['units'] ?? [],

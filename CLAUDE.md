@@ -4,23 +4,25 @@ Guidance for Claude Code (and any contributor) working in this repository.
 
 ## Language convention
 
-**English — only text that renders in the UI (the "view" layer):**
+**Bengali — only these two:**
+
+- `doc/*.md` and `README.md`
+- Code comments, docblocks, and inline notes in all `.php`/`.sql` files
+  (including comments *inside* view files — anything that does not render or
+  reach the user)
+
+**English — everything else**, in particular:
 
 - Displayed strings in `resources/views/**` and `app/Modules/*/Views/**` —
-  headings, labels, button text, table column names, placeholders, page titles,
-  and flash / validation messages shown to the user.
-
-**Bengali — everything else:**
-
-- Code comments, docblocks, and inline notes in all `.php` files (including
-  comments *inside* view files — anything that does not render)
-- SQL file comments (`database/**/*.sql`)
-- `doc/*.md` and `README.md`
+  headings, labels, button text, table column names, placeholders, page titles
+- **Any message a user can see**, no matter which file it's written in —
+  `RuntimeException` text and `Message::success()/error()` strings thrown from
+  Service/Api classes count too, since they surface as toasts/flash messages.
+  Being outside `Views/**` does not make a string a "comment"; if a user reads
+  it, it's English.
 - Commit messages and PR descriptions
-
-**Identifiers stay English** as a practical matter — variable, function, class,
-table, and column names. This is not "writing" in the prose sense and the
-codebase is already all-English here.
+- Identifiers (variable, function, class, table, column names) — already the
+  case, the codebase is all-English there
 
 Notes:
 
@@ -67,4 +69,16 @@ an empty docroot — the site returns PHP-FPM's `File not found.` Fix:
 
 ```bash
 cd /home/moinul007/docker-projects && docker compose up -d --force-recreate --no-deps nginx php
+```
+
+## Gotcha: `public/uploads/` must stay world-writable
+
+`public/uploads/` is a bind mount owned by the host user (uid 1000), but
+php-fpm runs as `www-data` inside the container — it can't create the
+`categories/`/`products/` subfolders `App\Core\Upload` needs unless the
+directory is writable by everyone. If image uploads start failing with
+"Could not create the upload folder" (`mkdir(): Permission denied`), fix:
+
+```bash
+chmod -R 777 public/uploads
 ```

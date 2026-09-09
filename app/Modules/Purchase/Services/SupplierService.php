@@ -33,13 +33,13 @@ final class SupplierService
         $name = trim((string) ($data['name'] ?? ''));
 
         if ($name === '') {
-            throw new RuntimeException('সাপ্লায়ারের নাম দিতে হবে।');
+            throw new RuntimeException('Supplier name is required.');
         }
 
         $newOpening = round((float) ($data['opening_balance'] ?? 0), 4);
 
         if ($newOpening < 0) {
-            throw new RuntimeException('ওপেনিং ব্যালেন্স ঋণাত্মক হতে পারবে না।');
+            throw new RuntimeException('Opening balance cannot be negative.');
         }
 
         $oldOpening = $id > 0
@@ -98,11 +98,11 @@ final class SupplierService
         }
 
         if (DB::table('purchases')->where('supplier_id', $id)->exists()) {
-            throw new RuntimeException('এই সাপ্লায়ারের ক্রয় এন্ট্রি আছে — ডিলিট করা যাবে না।');
+            throw new RuntimeException('This supplier has purchase entries — it cannot be deleted.');
         }
 
         if (DB::table('purchase_returns')->where('supplier_id', $id)->exists()) {
-            throw new RuntimeException('এই সাপ্লায়ারের ক্রয়-ফেরত এন্ট্রি আছে — ডিলিট করা যাবে না।');
+            throw new RuntimeException('This supplier has purchase-return entries — it cannot be deleted.');
         }
 
         return DB::transaction(static function () use ($id): bool {

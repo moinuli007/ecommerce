@@ -55,8 +55,8 @@ final class LedgerAccounts
 
         if ($template === []) {
             throw new RuntimeException(
-                "auto ledger টেমপ্লেট পাওয়া যায়নি (id={$auto->value}) — "
-                . 'database/seed/002_account_auto.sql চালানো হয়েছে তো?'
+                "Auto ledger template not found (id={$auto->value}) — "
+                . 'has database/seed/002_account_auto.sql been run?'
             );
         }
 
@@ -119,7 +119,7 @@ final class LedgerAccounts
         $template = DB::getById('a_auto_chart_of_accounts', $auto->value);
 
         if ($template === []) {
-            throw new RuntimeException("auto chart টেমপ্লেট পাওয়া যায়নি (id={$auto->value})");
+            throw new RuntimeException("Auto chart template not found (id={$auto->value})");
         }
 
         $masterId = self::systemMasterAccount(
@@ -152,7 +152,7 @@ final class LedgerAccounts
         $template = DB::getById('a_auto_master_account', $auto->value);
 
         if ($template === []) {
-            throw new RuntimeException("auto master account টেমপ্লেট পাওয়া যায়নি (id={$auto->value})");
+            throw new RuntimeException("Auto master account template not found (id={$auto->value})");
         }
 
         $masterId = MasterAccount::create([
@@ -183,7 +183,7 @@ final class LedgerAccounts
         int $forExpense = 0
     ): int {
         if (trim($name) === '') {
-            throw new RuntimeException('লেজারের নাম খালি রাখা যাবে না।');
+            throw new RuntimeException('Ledger name cannot be empty.');
         }
 
         if ($code === '') {
@@ -209,7 +209,7 @@ final class LedgerAccounts
         $ledgerId = DB::insert('a_ledgers', $data);
 
         if ($ledgerId === 0) {
-            throw new RuntimeException("লেজার তৈরি করা যায়নি: $name");
+            throw new RuntimeException("Could not create ledger: $name");
         }
 
         return $ledgerId;
@@ -247,7 +247,7 @@ final class LedgerAccounts
         }
 
         if (!isset($party['id'], $party['name'])) {
-            throw new RuntimeException($type->label() . ' এর id বা name পাওয়া যায়নি।');
+            throw new RuntimeException($type->label() . ' is missing id or name.');
         }
 
         // আগে থেকে লেজার থাকতে পারে (ledger_id কলাম খালি হলেও)

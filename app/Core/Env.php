@@ -24,7 +24,7 @@ final class Env
         self::$loaded = true;
 
         if (!is_file($path)) {
-            throw new RuntimeException(".env ফাইল পাওয়া যায়নি: $path (.env.example কপি করুন)");
+            throw new RuntimeException(".env file not found: $path (copy .env.example)");
         }
 
         foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {

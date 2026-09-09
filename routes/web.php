@@ -22,5 +22,5 @@ Router::get('/', static function (): string {
 
     return '<!doctype html><meta charset="utf-8">'
         . '<title>' . htmlspecialchars((string) Env::get('APP_NAME', 'Ecommerce')) . '</title>'
-        . '<p>স্টোরফ্রন্ট Phase 2-এ আসছে। এখন <a href="' . $appUrl . '/admin/vouchers">অ্যাডমিন → ভাউচার</a> দেখুন।</p>';
+        . '<p>The storefront is coming in Phase 2. For now, see <a href="' . $appUrl . '/admin/vouchers">Admin → Vouchers</a>.</p>';
 }, ['name' => 'web.home']);

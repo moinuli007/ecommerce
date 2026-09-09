@@ -61,10 +61,10 @@ foreach ($sales as $point) {
     <div class="msg msg-e trial-banner">
         <?= Menu::icon('alert') ?>
         <span>
-            <strong>ট্রায়াল ব্যালেন্স মিলছে না।</strong>
-            ডেবিট <?= number_format((float) $trial['debit'], 2) ?> ·
-            ক্রেডিট <?= number_format((float) $trial['credit'], 2) ?> —
-            কোথাও সরাসরি DB-তে এন্ট্রি হয়েছে কি না দেখুন।
+            <strong>Trial balance doesn't match.</strong>
+            Debit <?= number_format((float) $trial['debit'], 2) ?> ·
+            Credit <?= number_format((float) $trial['credit'], 2) ?> —
+            check whether any entries were made directly in the DB.
         </span>
     </div>
 <?php endif; ?>
@@ -86,14 +86,14 @@ foreach ($sales as $point) {
         <!-- দৈনিক বিক্রি -->
         <div class="card">
             <h2 class="card-title">
-                শেষ ১৪ দিনের বিক্রি
+                Sales — Last 14 Days
                 <span class="muted" style="margin-left:auto;font-size:.8rem">
-                    সর্বোচ্চ <?= $money($maxSale) ?>
+                    Peak <?= $money($maxSale) ?>
                 </span>
             </h2>
 
             <?php if ($maxSale <= 0): ?>
-                <div class="empty">এখনো কোনো বিক্রি হয়নি।</div>
+                <div class="empty">No sales yet.</div>
             <?php else: ?>
                 <div class="chart">
                     <?php foreach ($sales as $point): ?>
@@ -110,23 +110,23 @@ foreach ($sales as $point) {
         <!-- সাম্প্রতিক ভাউচার -->
         <div class="card">
             <h2 class="card-title">
-                সাম্প্রতিক ভাউচার
+                Recent Vouchers
                 <a href="<?= View::e($appUrl . '/admin/vouchers') ?>"
-                   style="margin-left:auto;font-size:.82rem;color:var(--brand)">সব দেখুন →</a>
+                   style="margin-left:auto;font-size:.82rem;color:var(--brand)">View all →</a>
             </h2>
 
             <?php if ($recent === []): ?>
                 <div class="empty">
-                    এখনো কোনো ভাউচার নাই।
-                    <a href="<?= View::e($appUrl . '/admin/vouchers/entry') ?>" style="color:var(--brand)">প্রথমটা তৈরি করুন</a>।
+                    No vouchers yet.
+                    <a href="<?= View::e($appUrl . '/admin/vouchers/entry') ?>" style="color:var(--brand)">Create the first one</a>.
                 </div>
             <?php else: ?>
                 <div class="scroll">
                     <table>
                         <thead>
                         <tr>
-                            <th>কোড</th><th>তারিখ</th><th>ধরন</th>
-                            <th>ডেবিট</th><th>ক্রেডিট</th><th class="num">পরিমাণ</th>
+                            <th>Code</th><th>Date</th><th>Type</th>
+                            <th>Debit</th><th>Credit</th><th class="num">Amount</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -150,7 +150,7 @@ foreach ($sales as $point) {
     <div>
         <!-- আটকে থাকা টাকা -->
         <div class="card">
-            <h2 class="card-title">আটকে থাকা টাকা</h2>
+            <h2 class="card-title">Money in Transit</h2>
             <?php foreach ($pending as $row): ?>
                 <div class="kv">
                     <span class="muted"><?= View::e($row['label']) ?></span>
@@ -161,9 +161,9 @@ foreach ($sales as $point) {
 
         <!-- মাস্টার অ্যাকাউন্ট সারাংশ -->
         <div class="card">
-            <h2 class="card-title">হিসাবের সারাংশ</h2>
+            <h2 class="card-title">Account Summary</h2>
             <?php if ($masters === []): ?>
-                <div class="empty">কোনো লেনদেন নাই।</div>
+                <div class="empty">No transactions yet.</div>
             <?php else: ?>
                 <?php foreach ($masters as $master): ?>
                     <div class="kv">
@@ -180,13 +180,13 @@ foreach ($sales as $point) {
         <!-- বড় ব্যালেন্সের লেজার -->
         <div class="card">
             <h2 class="card-title">
-                বড় ব্যালেন্স
+                Top Balances
                 <a href="<?= View::e($appUrl . '/admin/ledgers') ?>"
-                   style="margin-left:auto;font-size:.82rem;color:var(--brand)">চার্ট →</a>
+                   style="margin-left:auto;font-size:.82rem;color:var(--brand)">Chart →</a>
             </h2>
 
             <?php if ($top === []): ?>
-                <div class="empty">কোনো লেজারে ব্যালেন্স নাই।</div>
+                <div class="empty">No ledger has a balance yet.</div>
             <?php else: ?>
                 <?php foreach ($top as $ledger): ?>
                     <div class="kv">
@@ -206,23 +206,23 @@ foreach ($sales as $point) {
 
         <!-- হিসাবের স্বাস্থ্য -->
         <div class="card">
-            <h2 class="card-title">হিসাবের স্বাস্থ্য</h2>
+            <h2 class="card-title">Account Health</h2>
             <div class="kv">
-                <span class="muted">ট্রায়াল ব্যালেন্স</span>
+                <span class="muted">Trial Balance</span>
                 <strong class="<?= $trial['is_balanced'] ? 'pos' : 'neg' ?>">
-                    <?= $trial['is_balanced'] ? '✓ মিলছে' : '✗ মিলছে না' ?>
+                    <?= $trial['is_balanced'] ? '✓ Balanced' : '✗ Not balanced' ?>
                 </strong>
             </div>
             <div class="kv">
-                <span class="muted">মোট ডেবিট</span>
+                <span class="muted">Total Debit</span>
                 <strong><?= number_format((float) $trial['debit'], 2) ?></strong>
             </div>
             <div class="kv">
-                <span class="muted">মোট ক্রেডিট</span>
+                <span class="muted">Total Credit</span>
                 <strong><?= number_format((float) $trial['credit'], 2) ?></strong>
             </div>
             <div class="kv">
-                <span class="muted">সক্রিয় লেজার</span>
+                <span class="muted">Active Ledgers</span>
                 <strong><?= (int) $trial['ledgers'] ?></strong>
             </div>
         </div>

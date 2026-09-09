@@ -11,9 +11,9 @@ use App\Core\View;
 <div class="card">
     <form class="filters" method="get" action="<?= View::e($appUrl . '/admin/vouchers') ?>">
         <div>
-            <label for="type">ধরন</label>
+            <label for="type">Type</label>
             <select id="type" name="type">
-                <option value="">সব</option>
+                <option value="">All</option>
                 <?php foreach ($types as $type): ?>
                     <option value="<?= (int) $type['id'] ?>" <?= (string) $filters['type'] === (string) $type['id'] ? 'selected' : '' ?>>
                         <?= View::e($type['name']) ?>
@@ -22,38 +22,38 @@ use App\Core\View;
             </select>
         </div>
         <div>
-            <label for="from">থেকে</label>
+            <label for="from">From</label>
             <input id="from" name="from" type="date" value="<?= View::e($filters['from']) ?>">
         </div>
         <div>
-            <label for="to">পর্যন্ত</label>
+            <label for="to">To</label>
             <input id="to" name="to" type="date" value="<?= View::e($filters['to']) ?>">
         </div>
         <div>
-            <label for="code">ভাউচার কোড</label>
-            <input id="code" name="code" value="<?= View::e($filters['code']) ?>" placeholder="যেমন JV-000012">
+            <label for="code">Voucher Code</label>
+            <input id="code" name="code" value="<?= View::e($filters['code']) ?>" placeholder="e.g. JV-000012">
         </div>
-        <button type="submit">খুঁজুন</button>
-        <a class="ghost" href="<?= View::e($appUrl . '/admin/vouchers/entry') ?>"><button type="button" class="ghost">নতুন ভাউচার</button></a>
+        <button type="submit">Search</button>
+        <a class="ghost" href="<?= View::e($appUrl . '/admin/vouchers/entry') ?>"><button type="button" class="ghost">New Voucher</button></a>
     </form>
 </div>
 
 <div class="card">
     <?php if ($vouchers === []): ?>
-        <div class="empty">কোনো ভাউচার পাওয়া যায়নি।</div>
+        <div class="empty">No vouchers found.</div>
     <?php else: ?>
         <div class="scroll">
             <table>
                 <thead>
                 <tr>
-                    <th>কোড</th>
-                    <th>তারিখ</th>
-                    <th>ধরন</th>
-                    <th>ডেবিট</th>
-                    <th>ক্রেডিট</th>
-                    <th class="num">পরিমাণ</th>
-                    <th>বিবরণ</th>
-                    <th>এন্ট্রি</th>
+                    <th>Code</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Debit</th>
+                    <th>Credit</th>
+                    <th class="num">Amount</th>
+                    <th>Note</th>
+                    <th>Entered By</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -75,8 +75,8 @@ use App\Core\View;
 
         <?php if (($pagination['pages'] ?? 1) > 1): ?>
             <p class="muted">
-                মোট <?= (int) $pagination['total'] ?> টি —
-                পৃষ্ঠা <?= (int) $pagination['page'] ?> / <?= (int) $pagination['pages'] ?>
+                Total <?= (int) $pagination['total'] ?> —
+                page <?= (int) $pagination['page'] ?> / <?= (int) $pagination['pages'] ?>
             </p>
         <?php endif; ?>
     <?php endif; ?>

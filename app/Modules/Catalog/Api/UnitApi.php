@@ -37,7 +37,7 @@ final class UnitApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ইউনিট গ্রুপ সংরক্ষণ হয়েছে।', ['group' => UnitGroup::find($id)]);
+        return Response::success('Unit group saved.', ['group' => UnitGroup::find($id)]);
     }
 
     /** DELETE /api/v1/unit-groups/{id} */
@@ -49,7 +49,7 @@ final class UnitApi
             return Response::error($e->getMessage());
         }
 
-        return $done ? Response::success('গ্রুপ ডিলিট হয়েছে।') : Response::error('গ্রুপ পাওয়া যায়নি।');
+        return $done ? Response::success('Group deleted.') : Response::error('Group not found.');
     }
 
     /** POST /api/v1/units */
@@ -69,7 +69,7 @@ final class UnitApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ইউনিট সংরক্ষণ হয়েছে।', ['unit' => Unit::find($id)]);
+        return Response::success('Unit saved.', ['unit' => Unit::find($id)]);
     }
 
     /** DELETE /api/v1/units/{id} */
@@ -81,7 +81,7 @@ final class UnitApi
             return Response::error($e->getMessage());
         }
 
-        return $done ? Response::success('ইউনিট ডিলিট হয়েছে।') : Response::error('ইউনিট পাওয়া যায়নি।');
+        return $done ? Response::success('Unit deleted.') : Response::error('Unit not found.');
     }
 
     /** GET /api/v1/units/convert?quantity=&from=&to= */

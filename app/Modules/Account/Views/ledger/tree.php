@@ -8,7 +8,7 @@ use App\Core\View;
 <?php if ($tree === []): ?>
     <div class="card">
         <div class="empty">
-            চার্ট এখনো খালি। প্রথম ভাউচার পোস্ট হলে সিস্টেম লেজারগুলো নিজে থেকেই তৈরি হয়ে যাবে।
+            The chart is empty for now. System ledgers are created automatically once the first voucher is posted.
         </div>
     </div>
 <?php else: ?>
@@ -25,7 +25,7 @@ use App\Core\View;
                     <span class="muted"><?= View::e($chart['code']) ?></span>
 
                     <?php if ($chart['ledgers'] === []): ?>
-                        <p class="muted" style="margin:.25rem 0 0 1rem">— কোনো লেজার নাই —</p>
+                        <p class="muted" style="margin:.25rem 0 0 1rem">— No ledgers —</p>
                     <?php else: ?>
                         <ul style="margin:.25rem 0 0 1rem;padding-left:1rem">
                             <?php foreach ($chart['ledgers'] as $ledger): ?>

@@ -15,7 +15,7 @@ final class DashboardController
         $payload = DashboardApi::index();
 
         return View::layout('layouts/admin', 'Dashboard::index', [
-            'title'    => 'ড্যাশবোর্ড',
+            'title'    => 'Dashboard',
             'data'     => $payload,
             'messages' => $payload['m'] ?? [],
         ]);

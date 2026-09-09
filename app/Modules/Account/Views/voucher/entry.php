@@ -9,14 +9,14 @@ use App\Core\View;
 ?>
 <div class="card">
     <p class="muted">
-        এই ফর্মটা সরাসরি <code>POST /api/v1/vouchers</code> এ পাঠায় — অ্যাডমিন পেজের
-        নিজস্ব কোনো সেভ-পাথ নাই, API-ই একমাত্র রাস্তা।
+        This form posts directly to <code>POST /api/v1/vouchers</code> — the admin page has
+        no save path of its own, the API is the only route.
     </p>
 
     <form id="voucher-form">
         <div class="filters">
             <div>
-                <label for="type">ধরন</label>
+                <label for="type">Type</label>
                 <select id="type" name="type" required>
                     <?php foreach ($types as $type): ?>
                         <option value="<?= (int) $type['id'] ?>"><?= View::e($type['name']) ?></option>
@@ -24,42 +24,42 @@ use App\Core\View;
                 </select>
             </div>
             <div>
-                <label for="date">তারিখ</label>
+                <label for="date">Date</label>
                 <input id="date" name="date" type="date" value="<?= View::e($today) ?>" required>
             </div>
             <div>
-                <label for="amount">পরিমাণ</label>
+                <label for="amount">Amount</label>
                 <input id="amount" name="amount" type="number" step="0.01" min="0.01" required>
             </div>
         </div>
 
         <div class="filters" style="margin-top:.75rem">
             <div>
-                <label for="debit_ledger">ডেবিট লেজার</label>
+                <label for="debit_ledger">Debit Ledger</label>
                 <select id="debit_ledger" name="debit_ledger" required>
-                    <option value="">— বাছুন —</option>
+                    <option value="">— Select —</option>
                     <?php foreach ($ledgers as $ledger): ?>
                         <option value="<?= (int) $ledger['id'] ?>"><?= View::e($ledger['chart'] . ' › ' . $ledger['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div>
-                <label for="credit_ledger">ক্রেডিট লেজার</label>
+                <label for="credit_ledger">Credit Ledger</label>
                 <select id="credit_ledger" name="credit_ledger" required>
-                    <option value="">— বাছুন —</option>
+                    <option value="">— Select —</option>
                     <?php foreach ($ledgers as $ledger): ?>
                         <option value="<?= (int) $ledger['id'] ?>"><?= View::e($ledger['chart'] . ' › ' . $ledger['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div style="flex:1 1 240px">
-                <label for="note">বিবরণ</label>
+                <label for="note">Note</label>
                 <input id="note" name="note" maxlength="255" style="width:100%">
             </div>
         </div>
 
         <div style="margin-top:1rem">
-            <button type="submit">সেভ করুন</button>
+            <button type="submit">Save</button>
         </div>
     </form>
 
@@ -73,7 +73,7 @@ document.getElementById('voucher-form').addEventListener('submit', async functio
     const result = document.getElementById('result');
     const body   = Object.fromEntries(new FormData(this).entries());
 
-    result.innerHTML = '<p class="muted">সেভ হচ্ছে…</p>';
+    result.innerHTML = '<p class="muted">Saving…</p>';
 
     try {
         const response = await fetch('<?= View::e($appUrl) ?>/api/v1/vouchers', {
@@ -94,12 +94,12 @@ document.getElementById('voucher-form').addEventListener('submit', async functio
             document.getElementById('date').value = '<?= View::e($today) ?>';
 
             if (data.voucher) {
-                result.innerHTML += '<p>ভাউচার কোড: <a href="<?= View::e($appUrl) ?>/admin/vouchers/'
+                result.innerHTML += '<p>Voucher code: <a href="<?= View::e($appUrl) ?>/admin/vouchers/'
                     + data.voucher.id + '">' + data.voucher.code + '</a></p>';
             }
         }
     } catch (error) {
-        result.innerHTML = '<div class="msg msg-e">রিকোয়েস্ট পাঠানো যায়নি: ' + error.message + '</div>';
+        result.innerHTML = '<div class="msg msg-e">Could not send the request: ' + error.message + '</div>';
     }
 });
 </script>

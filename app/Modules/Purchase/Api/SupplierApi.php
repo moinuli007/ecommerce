@@ -31,7 +31,7 @@ final class SupplierApi
         $supplier = Supplier::find(Request::paramInt('id'));
 
         if ($supplier === []) {
-            return Response::error('সাপ্লায়ার পাওয়া যায়নি।');
+            return Response::error('Supplier not found.');
         }
 
         return Response::success('', ['supplier' => $supplier]);
@@ -56,7 +56,7 @@ final class SupplierApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('সাপ্লায়ার যোগ হয়েছে।', ['supplier' => Supplier::find($id)]);
+        return Response::success('Supplier added.', ['supplier' => Supplier::find($id)]);
     }
 
     /** PUT /api/v1/suppliers/{id} */
@@ -65,7 +65,7 @@ final class SupplierApi
         $id = Request::paramInt('id');
 
         if (Supplier::find($id) === []) {
-            return Response::error('সাপ্লায়ার পাওয়া যায়নি।');
+            return Response::error('Supplier not found.');
         }
 
         // phone/code এ 'max' নিয়ম দেওয়া হয় না — Validator সংখ্যাসদৃশ স্ট্রিংকে
@@ -84,7 +84,7 @@ final class SupplierApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('সাপ্লায়ার আপডেট হয়েছে।', ['supplier' => Supplier::find($id)]);
+        return Response::success('Supplier updated.', ['supplier' => Supplier::find($id)]);
     }
 
     /** DELETE /api/v1/suppliers/{id} */
@@ -97,7 +97,7 @@ final class SupplierApi
         }
 
         return $done
-            ? Response::success('সাপ্লায়ার ডিলিট হয়েছে।')
-            : Response::error('সাপ্লায়ার পাওয়া যায়নি।');
+            ? Response::success('Supplier deleted.')
+            : Response::error('Supplier not found.');
     }
 }

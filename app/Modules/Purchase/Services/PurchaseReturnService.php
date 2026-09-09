@@ -211,13 +211,13 @@ final class PurchaseReturnService
         $purchase = Purchase::find((int) ($data['purchase_id'] ?? 0));
 
         if ($purchase === []) {
-            throw new RuntimeException('কোন ক্রয় থেকে ফেরত — সেই ক্রয় বাছাই করুন।');
+            throw new RuntimeException('Please choose which purchase this is a return from.');
         }
 
         $supplier = Supplier::find((int) $purchase['supplier_id']);
 
         if ($supplier === []) {
-            throw new RuntimeException('সাপ্লায়ার পাওয়া যায়নি।');
+            throw new RuntimeException('Supplier not found.');
         }
 
         // ওই ক্রয়ের লাইনগুলো — কী কী ফেরত দেওয়া যায়
@@ -255,7 +255,7 @@ final class PurchaseReturnService
         $rawItems = $data['items'] ?? [];
 
         if (!is_array($rawItems) || $rawItems === []) {
-            throw new RuntimeException('অন্তত একটা লাইন যোগ করুন।');
+            throw new RuntimeException('Add at least one line.');
         }
 
         $items = [];
@@ -268,35 +268,35 @@ final class PurchaseReturnService
             $key       = $productId . ':' . $variantId;
 
             if (!isset($allowed[$key])) {
-                throw new RuntimeException('এই ক্রয়ে ছিল না এমন পণ্য ফেরত দেওয়া যাবে না।');
+                throw new RuntimeException('Cannot return a product that wasn\'t in this purchase.');
             }
 
             if ($qty <= 0) {
-                throw new RuntimeException('ফেরতের পরিমাণ শূন্যের বেশি হতে হবে।');
+                throw new RuntimeException('Return quantity must be greater than zero.');
             }
 
             $remaining = $allowed[$key]['qty'] - ($already[$key] ?? 0);
 
             if ($qty - $remaining > 0.0001) {
                 throw new RuntimeException(
-                    'ফেরতের পরিমাণ কেনা পরিমাণের বেশি হতে পারবে না (বাকি: ' . $remaining . ')।'
+                    'Return quantity cannot exceed the purchased quantity (remaining: ' . $remaining . ').'
                 );
             }
 
             $product = Product::find($productId);
 
             if ($product === []) {
-                throw new RuntimeException('প্রোডাক্ট পাওয়া যায়নি।');
+                throw new RuntimeException('Product not found.');
             }
 
             if ($variantId > 0 && ProductVariant::find($variantId) === []) {
-                throw new RuntimeException('ভ্যারিয়েন্ট পাওয়া যায়নি।');
+                throw new RuntimeException('Variant not found.');
             }
 
             $unitId = $allowed[$key]['unit_id'];
 
             if (Unit::find($unitId) === []) {
-                throw new RuntimeException('ইউনিট পাওয়া যায়নি।');
+                throw new RuntimeException('Unit not found.');
             }
 
             // ফেরত দেওয়ার মতো স্টক আছে তো?
@@ -304,7 +304,7 @@ final class PurchaseReturnService
             $qtyBase = UnitService::toBase($qty, $unitId);
 
             if ($onHand - $qtyBase < -0.0001) {
-                throw new RuntimeException("'{$product['name']}' এর যথেষ্ট স্টক নাই ফেরত দেওয়ার মতো।");
+                throw new RuntimeException("'{$product['name']}' doesn't have enough stock to return.");
             }
 
             $items[] = [

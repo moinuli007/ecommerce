@@ -37,11 +37,11 @@ final class AuthApi
         $user = DB::getRow('users', [$column => $username]);
 
         if ($user === [] || (int) $user['isActive'] !== 1) {
-            return Response::error('ইউজারনেম বা পাসওয়ার্ড সঠিক নয়।');
+            return Response::error('Incorrect username or password.');
         }
 
         if (!is_string($user['password']) || !password_verify(Request::string('password'), $user['password'])) {
-            return Response::error('ইউজারনেম বা পাসওয়ার্ড সঠিক নয়।');
+            return Response::error('Incorrect username or password.');
         }
 
         Auth::loginSession($user);
@@ -52,7 +52,7 @@ final class AuthApi
             $payload['token'] = Auth::issueToken((int) $user['id'], Request::string('device', 'api'));
         }
 
-        return Response::success('লগইন সফল হয়েছে।', $payload);
+        return Response::success('Logged in successfully.', $payload);
     }
 
     /**
@@ -64,7 +64,7 @@ final class AuthApi
     {
         Auth::logout();
 
-        return Response::success('লগআউট হয়েছে।');
+        return Response::success('Logged out.');
     }
 
     /**

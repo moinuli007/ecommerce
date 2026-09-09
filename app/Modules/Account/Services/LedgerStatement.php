@@ -44,7 +44,7 @@ final class LedgerStatement
         $ledger = Ledger::withChart($ledgerId);
 
         if ($ledger === []) {
-            throw new RuntimeException("লেজার পাওয়া যায়নি (id=$ledgerId)।");
+            throw new RuntimeException("Ledger not found (id=$ledgerId).");
         }
 
         $nature   = MasterAccountType::from((int) $ledger['master_type'])->nature();
@@ -106,7 +106,7 @@ final class LedgerStatement
         $ledger = Ledger::withChart($ledgerId);
 
         if ($ledger === []) {
-            throw new RuntimeException("লেজার পাওয়া যায়নি (id=$ledgerId)।");
+            throw new RuntimeException("Ledger not found (id=$ledgerId).");
         }
 
         $nature   = MasterAccountType::from((int) $ledger['master_type'])->nature();

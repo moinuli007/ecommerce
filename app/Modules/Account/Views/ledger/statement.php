@@ -13,7 +13,7 @@ $closing = $statement['closing'] ?? ['debit' => 0, 'credit' => 0, 'balance' => 0
 $total   = $statement['total'] ?? ['debit' => 0, 'credit' => 0];
 ?>
 <?php if ($ledger === []): ?>
-    <div class="card"><div class="empty">লেজার পাওয়া যায়নি।</div></div>
+    <div class="card"><div class="empty">Ledger not found.</div></div>
 <?php else: ?>
     <div class="card">
         <p style="margin:0 0 .75rem">
@@ -24,14 +24,14 @@ $total   = $statement['total'] ?? ['debit' => 0, 'credit' => 0];
 
         <form class="filters" method="get">
             <div>
-                <label for="from">থেকে</label>
+                <label for="from">From</label>
                 <input id="from" name="from" type="date" value="<?= View::e($filters['from']) ?>">
             </div>
             <div>
-                <label for="to">পর্যন্ত</label>
+                <label for="to">To</label>
                 <input id="to" name="to" type="date" value="<?= View::e($filters['to']) ?>">
             </div>
-            <button type="submit">দেখুন</button>
+            <button type="submit">View</button>
         </form>
     </div>
 
@@ -40,19 +40,19 @@ $total   = $statement['total'] ?? ['debit' => 0, 'credit' => 0];
             <table>
                 <thead>
                 <tr>
-                    <th>তারিখ</th>
-                    <th>ভাউচার</th>
-                    <th>ধরন</th>
-                    <th>বিপরীত হিসাব</th>
-                    <th>বিবরণ</th>
-                    <th class="num">ডেবিট</th>
-                    <th class="num">ক্রেডিট</th>
-                    <th class="num">ব্যালেন্স</th>
+                    <th>Date</th>
+                    <th>Voucher</th>
+                    <th>Type</th>
+                    <th>Counter Account</th>
+                    <th>Note</th>
+                    <th class="num">Debit</th>
+                    <th class="num">Credit</th>
+                    <th class="num">Balance</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td colspan="7"><strong>ওপেনিং ব্যালেন্স</strong></td>
+                    <td colspan="7"><strong>Opening Balance</strong></td>
                     <td class="num"><strong><?= number_format((float) $opening['balance'], 2) ?></strong></td>
                 </tr>
 
@@ -71,7 +71,7 @@ $total   = $statement['total'] ?? ['debit' => 0, 'credit' => 0];
                 </tbody>
                 <tfoot>
                 <tr>
-                    <td colspan="5"><strong>মোট</strong></td>
+                    <td colspan="5"><strong>Total</strong></td>
                     <td class="num"><strong><?= number_format((float) $total['debit'], 2) ?></strong></td>
                     <td class="num"><strong><?= number_format((float) $total['credit'], 2) ?></strong></td>
                     <td class="num"><strong><?= number_format((float) $closing['balance'], 2) ?> <?= View::e($closing['side']) ?></strong></td>

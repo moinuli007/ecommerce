@@ -91,7 +91,7 @@ final class PurchaseService
         $purchase = Purchase::find($id);
 
         if ($purchase === []) {
-            throw new RuntimeException('ক্রয় এন্ট্রি পাওয়া যায়নি।');
+            throw new RuntimeException('Purchase entry not found.');
         }
 
         [$supplier, $items, $meta] = self::validate($data);
@@ -216,6 +216,7 @@ final class PurchaseService
                 'qty'          => (float) $r['qty'],
                 'qty_base'     => (float) $r['qty_base'],
                 'unit_price'   => (float) $r['unit_price'],
+                'sale_price'   => (float) $r['sale_price'],
                 'line_total'   => (float) $r['line_total'],
             ], $rows),
         ];
@@ -274,17 +275,17 @@ final class PurchaseService
         $supplier = Supplier::find((int) ($data['supplier_id'] ?? 0));
 
         if ($supplier === []) {
-            throw new RuntimeException('সাপ্লায়ার বাছাই করুন।');
+            throw new RuntimeException('Please choose a supplier.');
         }
 
         if ((int) $supplier['isActive'] !== 1) {
-            throw new RuntimeException('সাপ্লায়ারটি নিষ্ক্রিয়।');
+            throw new RuntimeException('This supplier is inactive.');
         }
 
         $rawItems = $data['items'] ?? [];
 
         if (!is_array($rawItems) || $rawItems === []) {
-            throw new RuntimeException('অন্তত একটা লাইন যোগ করুন।');
+            throw new RuntimeException('Add at least one line.');
         }
 
         $items = [];
@@ -295,33 +296,38 @@ final class PurchaseService
             $unitId    = (int) ($line['unit_id'] ?? 0);
             $qty       = round((float) ($line['qty'] ?? 0), 4);
             $unitPrice = round((float) ($line['unit_price'] ?? 0), 4);
+            $salePrice = round((float) ($line['sale_price'] ?? 0), 4);
 
             $product = Product::find($productId);
 
             if ($product === []) {
-                throw new RuntimeException('একটা লাইনের প্রোডাক্ট পাওয়া যায়নি।');
+                throw new RuntimeException('A line\'s product was not found.');
             }
 
             if ($variantId > 0) {
                 $variant = ProductVariant::find($variantId);
 
                 if ($variant === [] || (int) $variant['product_id'] !== $productId) {
-                    throw new RuntimeException("'{$product['name']}' এর ভ্যারিয়েন্ট মেলেনি।");
+                    throw new RuntimeException("'{$product['name']}' variant does not match.");
                 }
             } elseif ((int) $product['has_variant'] === 1) {
-                throw new RuntimeException("'{$product['name']}' ভ্যারিয়েন্ট প্রোডাক্ট — ভ্যারিয়েন্ট বাছাই করুন।");
+                throw new RuntimeException("'{$product['name']}' is a variant product — please choose a variant.");
             }
 
             if (Unit::find($unitId) === []) {
-                throw new RuntimeException("'{$product['name']}' এর ইউনিট বাছাই করুন।");
+                throw new RuntimeException("Please choose a unit for '{$product['name']}'.");
             }
 
             if ($qty <= 0) {
-                throw new RuntimeException("'{$product['name']}' এর পরিমাণ শূন্যের বেশি হতে হবে।");
+                throw new RuntimeException("Quantity for '{$product['name']}' must be greater than zero.");
             }
 
             if ($unitPrice < 0) {
-                throw new RuntimeException("'{$product['name']}' এর দাম ঋণাত্মক হতে পারবে না।");
+                throw new RuntimeException("Price for '{$product['name']}' cannot be negative.");
+            }
+
+            if ($salePrice < 0) {
+                throw new RuntimeException("Sale price for '{$product['name']}' cannot be negative.");
             }
 
             $items[] = [
@@ -330,13 +336,14 @@ final class PurchaseService
                 'unit_id'    => $unitId,
                 'qty'        => $qty,
                 'unit_price' => $unitPrice,
+                'sale_price' => $salePrice,
             ];
         }
 
         $discount = round((float) ($data['discount'] ?? 0), 4);
 
         if ($discount < 0) {
-            throw new RuntimeException('ডিসকাউন্ট ঋণাত্মক হতে পারবে না।');
+            throw new RuntimeException('Discount cannot be negative.');
         }
 
         $meta = [
@@ -373,6 +380,7 @@ final class PurchaseService
                 'qty'         => $line['qty'],
                 'qty_base'    => $qtyBase,
                 'unit_price'  => $line['unit_price'],
+                'sale_price'  => $line['sale_price'],
                 'line_total'  => $lineTotal,
             ]);
 
@@ -388,6 +396,14 @@ final class PurchaseService
                 $invoiceDate,
                 $rateBase
             );
+
+            // বিক্রয় মূল্য — দিলে সরাসরি ওভাররাইট (weighted-average না, costing না —
+            // doc/09-media-and-purchase-pricing.md সিদ্ধান্ত P-07)। সবসময় প্রোডাক্ট-লেভেলে
+            // বসে (variant_id নির্বিশেষে) — একই প্রোডাক্টের সব রঙ/সাইজ এক দামে বিক্রি হয়,
+            // ভ্যারিয়েন্টের নিজস্ব sale_price নাই।
+            if ($line['sale_price'] > 0) {
+                Product::updateById($line['product_id'], ['sale_price' => $line['sale_price']]);
+            }
 
             $subTotal += $lineTotal;
         }
@@ -469,8 +485,8 @@ final class PurchaseService
 
             if ($onHand - (float) $line['qty_base'] < -0.0001) {
                 throw new RuntimeException(
-                    'এই ক্রয়ের কিছু পণ্য ইতিমধ্যে বিক্রি/ব্যবহার হয়ে গেছে — '
-                    . 'এখন এডিট/ডিলিট করলে স্টক ঋণাত্মক হবে।'
+                    'Some of this purchase\'s products have already been sold/used — '
+                    . 'editing/deleting now would make the stock negative.'
                 );
             }
         }

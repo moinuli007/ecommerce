@@ -4,6 +4,7 @@ namespace App\Modules\Catalog\Api;
 
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\Upload;
 use App\Core\Validator;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\Unit;
@@ -51,7 +52,7 @@ final class ProductApi
         $product = ProductService::details(Request::paramInt('id'));
 
         if ($product === []) {
-            return Response::error('প্রোডাক্ট পাওয়া যায়নি।');
+            return Response::error('Product not found.');
         }
 
         return Response::success('', ['product' => $product]);
@@ -63,7 +64,7 @@ final class ProductApi
         $product = ProductService::detailsBySlug((string) Request::param('slug', ''));
 
         if ($product === [] || (int) ($product['isActive'] ?? 0) !== 1) {
-            return Response::error('প্রোডাক্ট পাওয়া যায়নি।');
+            return Response::error('Product not found.');
         }
 
         return Response::success('', ['product' => $product]);
@@ -100,7 +101,7 @@ final class ProductApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('প্রোডাক্ট যোগ হয়েছে।', ['product' => ProductService::details($id)]);
+        return Response::success('Product added.', ['product' => ProductService::details($id)]);
     }
 
     /** PUT /api/v1/products/{id} */
@@ -109,7 +110,7 @@ final class ProductApi
         $id = Request::paramInt('id');
 
         if (Product::find($id) === []) {
-            return Response::error('প্রোডাক্ট পাওয়া যায়নি।');
+            return Response::error('Product not found.');
         }
 
         if (!Validator::check(Request::all(), [
@@ -126,7 +127,7 @@ final class ProductApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('প্রোডাক্ট আপডেট হয়েছে।', ['product' => ProductService::details($id)]);
+        return Response::success('Product updated.', ['product' => ProductService::details($id)]);
     }
 
     /** DELETE /api/v1/products/{id} */
@@ -138,7 +139,7 @@ final class ProductApi
             return Response::error($e->getMessage());
         }
 
-        return $done ? Response::success('প্রোডাক্ট ডিলিট হয়েছে।') : Response::error('পাওয়া যায়নি।');
+        return $done ? Response::success('Product deleted.') : Response::error('Not found.');
     }
 
     /**
@@ -154,7 +155,7 @@ final class ProductApi
         $selection = Request::array('selection');
 
         if (Product::find($id) === []) {
-            return Response::error('প্রোডাক্ট পাওয়া যায়নি।');
+            return Response::error('Product not found.');
         }
 
         try {
@@ -164,9 +165,9 @@ final class ProductApi
         }
 
         $message = $summary['total'] === 0
-            ? 'সব ভ্যারিয়েন্ট সরানো হয়েছে।'
+            ? 'All variants removed.'
             : sprintf(
-                '%d টি ভ্যারিয়েন্ট — নতুন %d, আগের %d, নিষ্ক্রিয় %d।',
+                '%d variants — %d new, %d kept, %d deactivated.',
                 $summary['total'],
                 $summary['created'],
                 $summary['kept'],
@@ -188,30 +189,50 @@ final class ProductApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ভ্যারিয়েন্ট আপডেট হয়েছে।');
+        return Response::success('Variant updated.');
     }
 
-    /** POST /api/v1/products/{id}/images */
+    /** POST /api/v1/products/{id}/images — multipart, field image (+ attribute_value_id?, alt?, is_primary?) */
     public static function addImage(): array
     {
-        if (!Validator::check(Request::all(), ['path' => 'required|max:255'])) {
-            return Response::payload();
+        $file = Request::file('image');
+
+        if ($file === []) {
+            return Response::error('Please choose an image.');
         }
 
         try {
-            $imageId = ProductService::addImage(Request::paramInt('id'), Request::all());
+            $path    = Upload::save($file, 'products');
+            $imageId = ProductService::addImage(Request::paramInt('id'), [
+                'path'               => $path,
+                'alt'                => Request::string('alt'),
+                'attribute_value_id' => Request::int('attribute_value_id'),
+                'is_primary'         => Request::int('is_primary'),
+            ]);
         } catch (RuntimeException $e) {
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ছবি যোগ হয়েছে।', ['image_id' => $imageId]);
+        return Response::success('Image added.', ['image_id' => $imageId, 'path' => $path]);
+    }
+
+    /** PUT /api/v1/images/{id} — primary/alt/color change (no new file) */
+    public static function updateImage(): array
+    {
+        try {
+            ProductService::updateImage(Request::paramInt('id'), Request::all());
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage());
+        }
+
+        return Response::success('Image updated.');
     }
 
     /** DELETE /api/v1/images/{id} */
     public static function deleteImage(): array
     {
         return ProductService::deleteImage(Request::paramInt('id'))
-            ? Response::success('ছবি সরানো হয়েছে।')
-            : Response::error('ছবি পাওয়া যায়নি।');
+            ? Response::success('Image removed.')
+            : Response::error('Image not found.');
     }
 }

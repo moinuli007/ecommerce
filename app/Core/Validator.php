@@ -72,15 +72,15 @@ final class Validator
         }
 
         return match ($rule) {
-            'required' => $empty ? "$label দিতে হবে।" : null,
-            'int'      => filter_var($value, FILTER_VALIDATE_INT) === false ? "$label একটি পূর্ণসংখ্যা হতে হবে।" : null,
-            'numeric'  => !is_numeric($value) ? "$label একটি সংখ্যা হতে হবে।" : null,
-            'email'    => !filter_var($value, FILTER_VALIDATE_EMAIL) ? "$label সঠিক ইমেইল নয়।" : null,
-            'date'     => strtotime((string) $value) === false ? "$label সঠিক তারিখ নয়।" : null,
-            'array'    => !is_array($value) ? "$label একটি লিস্ট হতে হবে।" : null,
-            'min'      => self::compare($value, (float) $arg, '<') ? "$label কমপক্ষে $arg হতে হবে।" : null,
-            'max'      => self::compare($value, (float) $arg, '>') ? "$label সর্বোচ্চ $arg হতে পারে।" : null,
-            'in'       => !in_array((string) $value, explode(',', (string) $arg), true) ? "$label এর মান সঠিক নয়।" : null,
+            'required' => $empty ? "$label is required." : null,
+            'int'      => filter_var($value, FILTER_VALIDATE_INT) === false ? "$label must be a whole number." : null,
+            'numeric'  => !is_numeric($value) ? "$label must be a number." : null,
+            'email'    => !filter_var($value, FILTER_VALIDATE_EMAIL) ? "$label is not a valid email." : null,
+            'date'     => strtotime((string) $value) === false ? "$label is not a valid date." : null,
+            'array'    => !is_array($value) ? "$label must be a list." : null,
+            'min'      => self::compare($value, (float) $arg, '<') ? "$label must be at least $arg." : null,
+            'max'      => self::compare($value, (float) $arg, '>') ? "$label can be at most $arg." : null,
+            'in'       => !in_array((string) $value, explode(',', (string) $arg), true) ? "$label is not a valid value." : null,
             default    => null,
         };
     }

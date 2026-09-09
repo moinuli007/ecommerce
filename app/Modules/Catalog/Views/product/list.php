@@ -23,13 +23,13 @@ use App\Core\View;
 <div class="card">
     <form class="filters" method="get" action="<?= View::e($appUrl . '/admin/products') ?>">
         <div>
-            <label for="q">খুঁজুন</label>
-            <input id="q" name="q" value="<?= View::e($filters['q']) ?>" placeholder="নাম বা SKU">
+            <label for="q">Search</label>
+            <input id="q" name="q" value="<?= View::e($filters['q']) ?>" placeholder="Name or SKU">
         </div>
         <div>
-            <label for="category_id">ক্যাটাগরি</label>
+            <label for="category_id">Category</label>
             <select id="category_id" name="category_id">
-                <option value="">সব</option>
+                <option value="">All</option>
                 <?php foreach ($categories as $category): ?>
                     <option value="<?= (int) $category['id'] ?>"
                         <?= (string) $filters['category_id'] === (string) $category['id'] ? 'selected' : '' ?>>
@@ -39,23 +39,23 @@ use App\Core\View;
             </select>
         </div>
         <div>
-            <label for="isActive">অবস্থা</label>
+            <label for="isActive">Status</label>
             <select id="isActive" name="isActive">
-                <option value="">সব</option>
-                <option value="1" <?= $filters['isActive'] === '1' ? 'selected' : '' ?>>চালু</option>
-                <option value="0" <?= $filters['isActive'] === '0' ? 'selected' : '' ?>>বন্ধ</option>
+                <option value="">All</option>
+                <option value="1" <?= $filters['isActive'] === '1' ? 'selected' : '' ?>>Active</option>
+                <option value="0" <?= $filters['isActive'] === '0' ? 'selected' : '' ?>>Off</option>
             </select>
         </div>
-        <button type="submit">খুঁজুন</button>
-        <a class="btn ghost" href="<?= View::e($appUrl . '/admin/products/create') ?>">+ নতুন প্রোডাক্ট</a>
+        <button type="submit">Search</button>
+        <a class="btn ghost" href="<?= View::e($appUrl . '/admin/products/create') ?>">+ New Product</a>
     </form>
 </div>
 
 <div class="card">
     <?php if ($products === []): ?>
         <div class="empty">
-            কোনো প্রোডাক্ট পাওয়া যায়নি।
-            <a href="<?= View::e($appUrl . '/admin/products/create') ?>" style="color:var(--brand)">প্রথমটা যোগ করুন</a>।
+            No products found.
+            <a href="<?= View::e($appUrl . '/admin/products/create') ?>" style="color:var(--brand)">Add the first one</a>.
         </div>
     <?php else: ?>
         <div class="scroll">
@@ -63,13 +63,13 @@ use App\Core\View;
                 <thead>
                 <tr>
                     <th></th>
-                    <th>নাম</th>
+                    <th>Name</th>
                     <th>SKU</th>
-                    <th>ক্যাটাগরি</th>
-                    <th class="num">দাম</th>
-                    <th class="num">স্টক</th>
-                    <th>ভ্যারিয়েন্ট</th>
-                    <th>অবস্থা</th>
+                    <th>Category</th>
+                    <th class="num">Price</th>
+                    <th class="num">Stock</th>
+                    <th>Variants</th>
+                    <th>Status</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -104,11 +104,14 @@ use App\Core\View;
                         <td class="num">
                             <?= rtrim(rtrim(number_format($product['stock'], 2), '0'), '.') ?>
                             <span class="muted"><?= View::e($product['unit_code']) ?></span>
-                            <?php if ($product['low_stock']): ?><span class="pill warn">কম</span><?php endif; ?>
+                            <?php if ($product['low_stock']): ?><span class="pill warn">Low</span><?php endif; ?>
                         </td>
-                        <td><?= $product['has_variant'] ? (int) $product['variant_count'] . ' টি' : '<span class="muted">—</span>' ?></td>
-                        <td><?= $product['isActive'] ? 'চালু' : '<span class="pill off">বন্ধ</span>' ?></td>
-                        <td><button type="button" class="ghost sm" data-del="<?= (int) $product['id'] ?>">ডিলিট</button></td>
+                        <td><?= $product['has_variant'] ? (int) $product['variant_count'] : '<span class="muted">—</span>' ?></td>
+                        <td><?= $product['isActive'] ? 'Active' : '<span class="pill off">Off</span>' ?></td>
+                        <td style="white-space:nowrap">
+                            <a class="btn ghost sm" href="<?= View::e($appUrl . '/admin/products/' . $product['id'] . '/edit') ?>">Edit</a>
+                            <button type="button" class="ghost sm danger" data-del="<?= (int) $product['id'] ?>">Delete</button>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -117,8 +120,8 @@ use App\Core\View;
 
         <?php if (($pagination['pages'] ?? 1) > 1): ?>
             <p class="muted">
-                মোট <?= (int) $pagination['total'] ?> টি —
-                পৃষ্ঠা <?= (int) $pagination['page'] ?> / <?= (int) $pagination['pages'] ?>
+                Total <?= (int) $pagination['total'] ?> —
+                page <?= (int) $pagination['page'] ?> / <?= (int) $pagination['pages'] ?>
             </p>
         <?php endif; ?>
     <?php endif; ?>
@@ -127,7 +130,7 @@ use App\Core\View;
 <script>
 document.querySelectorAll('[data-del]').forEach(function (btn) {
     btn.addEventListener('click', async function () {
-        if (!confirm('এই প্রোডাক্টটা ডিলিট করবেন?')) { return; }
+        if (!confirm('Delete this product?')) { return; }
 
         if (await api('/products/' + this.dataset.del, null, 'DELETE')) { location.reload(); }
     });

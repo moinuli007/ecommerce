@@ -2,7 +2,7 @@
 
 use App\Core\View;
 
-/** @var array<string,mixed> $product খালি হলে নতুন প্রোডাক্ট */
+/** @var array<string,mixed> $product empty for a new product */
 /** @var array<int,array{id:int,label:string}> $categories */
 /** @var array<int,array{id:int,name:string,code:string,group:string}> $units */
 /** @var array<int,array<string,mixed>> $attributes */
@@ -11,7 +11,23 @@ use App\Core\View;
 $isEdit    = ($product['id'] ?? 0) > 0;
 $selected  = $product['selected_values'] ?? [];
 $variants  = $product['variants'] ?? [];
+$images    = $product['images'] ?? [];
 $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $default;
+
+$colorAttribute = null;
+foreach ($attributes as $attribute) {
+    if ($attribute['code'] === 'color') {
+        $colorAttribute = $attribute;
+        break;
+    }
+}
+
+// ছবিগুলো রঙ অনুযায়ী গ্রুপ করা — General আলাদা সেকশনে
+$imagesByColor = [];
+foreach ($images as $image) {
+    $label = $image['color_name'] !== '' ? $image['color_name'] : 'General';
+    $imagesByColor[$label][] = $image;
+}
 ?>
 <style>
     .form-grid { display:grid; gap:1rem; grid-template-columns:2fr 1fr; align-items:start; }
@@ -40,6 +56,22 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
 
     .vgrid input { width:100%; min-width:84px; }
     .notice { font-size:.85rem; color:var(--muted); margin:.5rem 0 0; }
+
+    .img-upload-row { display:flex; align-items:flex-end; gap:.75rem; flex-wrap:wrap; }
+    .img-upload-row .field { margin-bottom:0; flex:1 1 160px; }
+    .img-preview-box {
+        width:56px; height:56px; border-radius:8px; border:1px solid var(--line);
+        overflow:hidden; flex:0 0 auto; display:none; background:var(--card);
+    }
+    .img-preview-box img { width:100%; height:100%; object-fit:cover; display:block; }
+    .img-color-group { margin-top:1rem; }
+    .img-color-group h3 { margin:0 0 .5rem; font-size:.85rem; color:var(--muted); }
+    .img-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:.75rem; }
+    .img-item { border:1px solid var(--line); border-radius:8px; overflow:hidden; font-size:.78rem; }
+    .img-item img { width:100%; height:120px; object-fit:cover; display:block; background:var(--card); }
+    .img-meta { display:flex; justify-content:space-between; align-items:center; gap:.3rem; padding:.35rem .5rem; }
+    .img-actions { display:flex; gap:.3rem; padding:0 .5rem .5rem; }
+    .img-actions button { flex:1; padding:.25rem .3rem; font-size:.72rem; }
 </style>
 
 <form id="product-form">
@@ -47,19 +79,19 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
         <!-- ------------------------------------------------------ বাম কলাম -->
         <div>
             <div class="card">
-                <h2 class="card-title">মূল তথ্য</h2>
+                <h2 class="card-title">Basic Info</h2>
 
                 <div class="field">
-                    <label for="name">নাম</label>
+                    <label for="name">Name</label>
                     <input id="name" name="name" required maxlength="191"
-                           value="<?= View::e($v('name')) ?>" placeholder="যেমন Single Pocket Casual Shirt">
+                           value="<?= View::e($v('name')) ?>" placeholder="e.g. Single Pocket Casual Shirt">
                 </div>
 
                 <div class="row2">
                     <div class="field">
-                        <label for="category_id">ক্যাটাগরি</label>
+                        <label for="category_id">Category</label>
                         <select id="category_id" name="category_id" required>
-                            <option value="">— বাছুন —</option>
+                            <option value="">— Select —</option>
                             <?php foreach ($categories as $category): ?>
                                 <option value="<?= (int) $category['id'] ?>"
                                     <?= (int) $v('category_id', 0) === (int) $category['id'] ? 'selected' : '' ?>>
@@ -69,9 +101,9 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
                         </select>
                     </div>
                     <div class="field">
-                        <label for="unit_id">ইউনিট</label>
+                        <label for="unit_id">Unit</label>
                         <select id="unit_id" name="unit_id" required>
-                            <option value="">— বাছুন —</option>
+                            <option value="">— Select —</option>
                             <?php foreach ($units as $unit): ?>
                                 <option value="<?= (int) $unit['id'] ?>"
                                     <?= (int) $v('unit_id', 0) === (int) $unit['id'] ? 'selected' : '' ?>>
@@ -83,33 +115,37 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
                 </div>
 
                 <div class="field">
-                    <label for="short_description">সংক্ষিপ্ত বর্ণনা</label>
+                    <label for="short_description">Short Description</label>
                     <input id="short_description" name="short_description" maxlength="500"
                            value="<?= View::e($v('short_description')) ?>">
                 </div>
 
                 <div class="field">
-                    <label for="description">বিস্তারিত</label>
+                    <label for="description">Description</label>
                     <textarea id="description" name="description"><?= View::e($v('description')) ?></textarea>
                 </div>
             </div>
 
             <div class="card">
-                <h2 class="card-title">দাম</h2>
+                <h2 class="card-title">Price</h2>
 
                 <div class="row3">
                     <div class="field">
-                        <label for="purchase_price">ক্রয় মূল্য</label>
-                        <input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0"
-                               value="<?= (float) $v('purchase_price', 0) ?>">
+                        <label>Purchase Price <span class="muted">(from Purchase entries)</span></label>
+                        <p class="notice" style="margin-top:0">
+                            <strong><?= number_format((float) $v('purchase_price', 0), 2) ?></strong>
+                            <?php if (!$isEdit): ?>
+                                — set once you record a Purchase entry after saving.
+                            <?php endif; ?>
+                        </p>
                     </div>
                     <div class="field">
-                        <label for="sale_price">বিক্রয় মূল্য</label>
+                        <label for="sale_price">Sale Price</label>
                         <input id="sale_price" name="sale_price" type="number" step="0.01" min="0"
                                value="<?= (float) $v('sale_price', 0) ?>">
                     </div>
                     <div class="field">
-                        <label for="offer_price">অফার মূল্য <span class="muted">(0 = অফার নাই)</span></label>
+                        <label for="offer_price">Offer Price <span class="muted">(0 = no offer)</span></label>
                         <input id="offer_price" name="offer_price" type="number" step="0.01" min="0"
                                value="<?= (float) $v('offer_price', 0) ?>">
                     </div>
@@ -117,25 +153,25 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
 
                 <div class="row2">
                     <div class="field">
-                        <label for="offer_start">অফার শুরু</label>
+                        <label for="offer_start">Offer Start</label>
                         <input id="offer_start" name="offer_start" type="date" value="<?= View::e($v('offer_start_date')) ?>">
                     </div>
                     <div class="field">
-                        <label for="offer_end">অফার শেষ</label>
+                        <label for="offer_end">Offer End</label>
                         <input id="offer_end" name="offer_end" type="date" value="<?= View::e($v('offer_end_date')) ?>">
                     </div>
                 </div>
 
-                <p class="notice">তারিখ খালি রাখলে অফারের কোনো সীমা থাকবে না।</p>
+                <p class="notice">Leave the dates empty for an offer with no time limit.</p>
             </div>
 
             <?php if ($isEdit): ?>
                 <!-- ------------------------------------------- ভ্যারিয়েন্ট -->
                 <div class="card">
-                    <h2 class="card-title">ভ্যারিয়েন্ট তৈরি</h2>
+                    <h2 class="card-title">Build Variants</h2>
                     <p class="notice" style="margin-top:0">
-                        যে সাইজ/রঙগুলো এই প্রোডাক্টে আছে সেগুলো বেছে দিন — সব কম্বিনেশন নিজে থেকেই তৈরি হবে।
-                        কোনো ভ্যারিয়েন্ট বাদ দিলে সেটা মুছে যায় না, শুধু নিষ্ক্রিয় হয়।
+                        Pick the sizes/colors this product comes in — every combination is generated automatically.
+                        Removing a variant here doesn't delete it, it just deactivates it.
                     </p>
 
                     <?php foreach ($attributes as $attribute): ?>
@@ -159,28 +195,30 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
                         </div>
                     <?php endforeach; ?>
 
-                    <button type="button" id="gen-variants">ভ্যারিয়েন্ট তৈরি / হালনাগাদ করুন</button>
+                    <button type="button" id="gen-variants">Build / Update Variants</button>
                     <span class="muted" id="combo-count" style="margin-left:.6rem"></span>
                 </div>
 
                 <?php if ($variants !== []): ?>
                     <div class="card">
                         <h2 class="card-title">
-                            ভ্যারিয়েন্টের দাম ও স্টক
-                            <span class="muted" style="margin-left:auto;font-size:.82rem"><?= count($variants) ?> টি</span>
+                            Variant Price &amp; Stock
+                            <span class="muted" style="margin-left:auto;font-size:.82rem"><?= count($variants) ?></span>
                         </h2>
+                        <p class="notice" style="margin-top:0">
+                            Sale price is set once for the whole product (see the Price card above) — every color/size sells at the same price. Only purchase price, offer, and stock vary by variant.
+                        </p>
 
                         <div class="scroll">
                             <table class="vgrid">
                                 <thead>
                                 <tr>
-                                    <th>ভ্যারিয়েন্ট</th>
+                                    <th>Variant</th>
                                     <th>SKU</th>
-                                    <th class="num">ক্রয়</th>
-                                    <th class="num">বিক্রয়</th>
-                                    <th class="num">অফার</th>
-                                    <th class="num">স্টক</th>
-                                    <th>অবস্থা</th>
+                                    <th class="num">Purchase</th>
+                                    <th class="num">Offer</th>
+                                    <th class="num">Stock</th>
+                                    <th>Status</th>
                                     <th></th>
                                 </tr>
                                 </thead>
@@ -190,17 +228,21 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
                                         style="<?= $variant['isActive'] ? '' : 'opacity:.5' ?>">
                                         <td><?= View::e($variant['name']) ?></td>
                                         <td><code class="muted"><?= View::e($variant['sku']) ?></code></td>
-                                        <td><input name="purchase_price" type="number" step="0.01" min="0"
-                                                   value="<?= $variant['purchase_price'] ?>"></td>
-                                        <td><input name="sale_price" type="number" step="0.01" min="0"
-                                                   value="<?= $variant['sale_price'] ?>"></td>
+                                        <td class="num" title="Set via Purchase entries">
+                                            <?= number_format((float) $variant['purchase_price'], 2) ?>
+                                        </td>
                                         <td><input name="offer_price" type="number" step="0.01" min="0"
                                                    value="<?= $variant['offer_price'] ?>"></td>
                                         <td class="num" title="Set via Purchase / Stock Adjustment"><?=
                                             rtrim(rtrim(number_format((float) $variant['stock'], 4), '0'), '.') ?: '0'
                                         ?></td>
-                                        <td><?= $variant['isActive'] ? 'চালু' : '<span class="muted">নিষ্ক্রিয়</span>' ?></td>
-                                        <td><button type="button" class="ghost" data-save-variant>সেভ</button></td>
+                                        <td><?= $variant['isActive'] ? 'Active' : '<span class="muted">Inactive</span>' ?></td>
+                                        <td style="white-space:nowrap">
+                                            <button type="button" class="ghost" data-save-variant>Save</button>
+                                            <?php if (!$variant['isActive']): ?>
+                                                <button type="button" class="ghost" data-activate-variant title="This combination isn't part of the current size/color selection above, but you can still turn it back on">Activate</button>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                                 </tbody>
@@ -208,64 +250,123 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
                         </div>
                     </div>
                 <?php endif; ?>
+
+                <!-- ------------------------------------------------- ছবি -->
+                <div class="card">
+                    <h2 class="card-title">
+                        Images
+                        <span class="muted" style="margin-left:auto;font-size:.82rem"><?= count($images) ?></span>
+                    </h2>
+                    <p class="notice" style="margin-top:0">
+                        Pick a color first if this photo is for one color, then choose the file — it uploads right away, no separate save step. Leave the color as General to show the photo on all variants.
+                    </p>
+
+                    <div class="img-upload-row">
+                        <div class="field">
+                            <label for="img-color">Color (optional)</label>
+                            <select id="img-color">
+                                <option value="0">— General —</option>
+                                <?php if ($colorAttribute !== null): ?>
+                                    <?php foreach ($colorAttribute['values'] as $value): ?>
+                                        <option value="<?= (int) $value['id'] ?>"><?= View::e($value['value']) ?></option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="img-file">Image (JPEG/PNG/WebP, max 2MB)</label>
+                            <input id="img-file" type="file" accept="image/jpeg,image/png,image/webp">
+                        </div>
+                        <div class="img-preview-box" id="img-preview-box">
+                            <img id="img-preview" src="" alt="">
+                        </div>
+                        <span class="muted" id="img-uploading" style="display:none">Uploading…</span>
+                    </div>
+
+                    <?php if ($images === []): ?>
+                        <p class="notice">No images yet.</p>
+                    <?php else: ?>
+                        <?php foreach ($imagesByColor as $colorLabel => $group): ?>
+                            <div class="img-color-group">
+                                <h3><?= View::e($colorLabel) ?></h3>
+                                <div class="img-grid">
+                                    <?php foreach ($group as $image): ?>
+                                        <div class="img-item" data-image="<?= (int) $image['id'] ?>">
+                                            <img src="<?= View::e($appUrl . $image['path']) ?>" alt="<?= View::e($image['alt']) ?>">
+                                            <div class="img-meta">
+                                                <span><?= $image['is_primary'] ? 'Primary' : '&nbsp;' ?></span>
+                                            </div>
+                                            <div class="img-actions">
+                                                <?php if (!$image['is_primary']): ?>
+                                                    <button type="button" class="ghost" data-make-primary>Make primary</button>
+                                                <?php endif; ?>
+                                                <button type="button" class="ghost danger" data-delete-image>Delete</button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
         </div>
 
         <!-- ------------------------------------------------------ ডান কলাম -->
         <div>
             <div class="card">
-                <h2 class="card-title">প্রকাশ</h2>
+                <h2 class="card-title">Publish</h2>
 
                 <div class="check">
                     <input id="isActive" type="checkbox" <?= (int) $v('isActive', 1) === 1 ? 'checked' : '' ?>>
-                    <label for="isActive">চালু</label>
+                    <label for="isActive">Active</label>
                 </div>
                 <div class="check">
                     <input id="isNew" type="checkbox" <?= (int) $v('isNew', 0) === 1 ? 'checked' : '' ?>>
-                    <label for="isNew">New Arrivals এ দেখাবে</label>
+                    <label for="isNew">Show in New Arrivals</label>
                 </div>
                 <div class="check">
                     <input id="isFeatured" type="checkbox" <?= (int) $v('isFeatured', 0) === 1 ? 'checked' : '' ?>>
-                    <label for="isFeatured">Bestsellers এ দেখাবে</label>
+                    <label for="isFeatured">Show in Bestsellers</label>
                 </div>
 
                 <div class="field" style="margin-top:.85rem">
-                    <label for="sort_order">ক্রম</label>
+                    <label for="sort_order">Sort Order</label>
                     <input id="sort_order" name="sort_order" type="number" value="<?= (int) $v('sort_order', 0) ?>">
                 </div>
 
-                <button type="submit" style="width:100%"><?= $isEdit ? 'আপডেট করুন' : 'সেভ করুন' ?></button>
+                <button type="submit" style="width:100%"><?= $isEdit ? 'Update' : 'Save' ?></button>
 
                 <?php if ($isEdit): ?>
                     <p class="notice">SKU: <code><?= View::e($v('sku')) ?></code></p>
                 <?php else: ?>
-                    <p class="notice">সেভ করার পর ভ্যারিয়েন্ট (সাইজ/রঙ) যোগ করতে পারবেন।</p>
+                    <p class="notice">You'll be able to add variants (size/color) after saving.</p>
                 <?php endif; ?>
             </div>
 
             <div class="card">
-                <h2 class="card-title">স্টক ও শিপিং</h2>
+                <h2 class="card-title">Stock &amp; Shipping</h2>
 
                 <div class="field">
-                    <label>স্টক <span class="muted">(Purchase / Stock Adjustment থেকে)</span></label>
+                    <label>Stock <span class="muted">(from Purchase / Stock Adjustment)</span></label>
                     <p class="notice" style="margin-top:0">
                         <strong><?= rtrim(rtrim(number_format((float) $v('stock', 0), 4), '0'), '.') ?: '0' ?></strong>
                         <?php if (!$isEdit): ?>
-                            — সেভ করার পর Purchase এন্ট্রি দিয়ে স্টক বাড়বে।
+                            — stock will increase once you record a Purchase entry after saving.
                         <?php elseif ($v('has_variant', false)): ?>
-                            — ভ্যারিয়েন্টের যোগফল।
+                            — sum of the variants.
                         <?php endif; ?>
                     </p>
                 </div>
 
                 <div class="field">
-                    <label for="stock_alert">স্টক অ্যালার্ট</label>
+                    <label for="stock_alert">Stock Alert</label>
                     <input id="stock_alert" name="stock_alert" type="number" step="0.01" min="0"
                            value="<?= (float) $v('stock_alert', 0) ?>">
                 </div>
 
                 <div class="field">
-                    <label for="weight">ওজন (গ্রাম)</label>
+                    <label for="weight">Weight (grams)</label>
                     <input id="weight" name="weight" type="number" step="0.001" min="0"
                            value="<?= (float) $v('weight', 0) ?>">
                 </div>
@@ -274,16 +375,16 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
             <div class="card">
                 <h2 class="card-title">SEO</h2>
                 <div class="field">
-                    <label for="slug">slug</label>
+                    <label for="slug">Slug</label>
                     <input id="slug" name="slug" maxlength="220" value="<?= View::e($v('slug')) ?>"
-                           placeholder="খালি রাখলে নাম থেকে হবে">
+                           placeholder="Leave empty to derive from the name">
                 </div>
                 <div class="field">
-                    <label for="meta_title">মেটা টাইটেল</label>
+                    <label for="meta_title">Meta Title</label>
                     <input id="meta_title" name="meta_title" maxlength="191" value="<?= View::e($v('meta_title')) ?>">
                 </div>
                 <div class="field">
-                    <label for="meta_description">মেটা বর্ণনা</label>
+                    <label for="meta_description">Meta Description</label>
                     <textarea id="meta_description" name="meta_description" maxlength="300"
                               style="min-height:60px"><?= View::e($v('meta_description')) ?></textarea>
                 </div>
@@ -309,7 +410,6 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
             unit_id:           parseInt(val('unit_id'), 10) || 0,
             short_description: val('short_description'),
             description:       val('description'),
-            purchase_price:    parseFloat(val('purchase_price')) || 0,
             sale_price:        parseFloat(val('sale_price')) || 0,
             offer_price:       parseFloat(val('offer_price')) || 0,
             offer_start:       val('offer_start'),
@@ -357,7 +457,7 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
         const label     = document.getElementById('combo-count');
 
         if (label) {
-            label.textContent = total > 0 ? (counts.join(' × ') + ' = ' + total + ' টি ভ্যারিয়েন্ট') : '';
+            label.textContent = total > 0 ? (counts.join(' × ') + ' = ' + total + ' variants') : '';
         }
     }
 
@@ -375,7 +475,7 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
             const selection = collectSelection();
 
             if (Object.keys(selection).length === 0
-                && !confirm('কোনো অপশন বাছাই করা হয়নি — সব ভ্যারিয়েন্ট নিষ্ক্রিয় হয়ে যাবে। চালিয়ে যাবেন?')) {
+                && !confirm('No option is selected — every variant will be deactivated. Continue?')) {
                 return;
             }
 
@@ -396,6 +496,68 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
             });
 
             await api('/variants/' + row.dataset.variant, body, 'PUT');
+        });
+    });
+
+    // ---- নিষ্ক্রিয় ভ্যারিয়েন্ট আবার সক্রিয় করা
+    document.querySelectorAll('[data-activate-variant]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const row = this.closest('tr');
+
+            if (await api('/variants/' + row.dataset.variant, { isActive: 1 }, 'PUT')) {
+                location.reload();
+            }
+        });
+    });
+
+    // ---- ছবি — ফাইল বাছলেই সাথে সাথে প্রিভিউ + আপলোড (আলাদা বাটন লাগবে না)
+    const imgFileInput  = document.getElementById('img-file');
+    const imgPreviewBox = document.getElementById('img-preview-box');
+    const imgPreview    = document.getElementById('img-preview');
+    const imgUploading  = document.getElementById('img-uploading');
+
+    if (imgFileInput) {
+        imgFileInput.addEventListener('change', async function () {
+            const file = imgFileInput.files[0];
+            if (!file) { imgPreviewBox.style.display = 'none'; return; }
+
+            imgPreview.src = URL.createObjectURL(file);
+            imgPreviewBox.style.display = '';
+            imgUploading.style.display = '';
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('attribute_value_id', document.getElementById('img-color').value);
+
+            const result = await window.apiUpload('/products/' + PRODUCT_ID + '/images', formData, 'POST');
+
+            imgUploading.style.display = 'none';
+
+            if (result) {
+                location.reload();
+            }
+        });
+    }
+
+    document.querySelectorAll('[data-make-primary]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const id = this.closest('[data-image]').dataset.image;
+
+            if (await api('/images/' + id, { is_primary: 1 }, 'PUT')) {
+                location.reload();
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-delete-image]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            if (!confirm('Delete this image?')) { return; }
+
+            const id = this.closest('[data-image]').dataset.image;
+
+            if (await api('/images/' + id, null, 'DELETE')) {
+                location.reload();
+            }
         });
     });
 })();

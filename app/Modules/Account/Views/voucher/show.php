@@ -5,17 +5,17 @@ use App\Core\View;
 /** @var array<string,mixed> $voucher */
 ?>
 <?php if ($voucher === []): ?>
-    <div class="card"><div class="empty">ভাউচার পাওয়া যায়নি।</div></div>
+    <div class="card"><div class="empty">Voucher not found.</div></div>
 <?php else: ?>
     <div class="card">
         <table>
-            <tr><th>কোড</th><td><?= View::e($voucher['code']) ?></td>
-                <th>তারিখ</th><td><?= View::e($voucher['date_display']) ?></td></tr>
-            <tr><th>ধরন</th><td><?= View::e($voucher['type']) ?></td>
-                <th>রেফারেন্স</th><td><?= View::e($voucher['reference']) ?></td></tr>
-            <tr><th>বিবরণ</th><td colspan="3"><?= View::e($voucher['note']) ?></td></tr>
-            <tr><th>এন্ট্রি করেছেন</th><td><?= View::e($voucher['created_by_name']) ?></td>
-                <th>পরিমাণ</th><td><?= number_format((float) $voucher['amount'], 2) ?></td></tr>
+            <tr><th>Code</th><td><?= View::e($voucher['code']) ?></td>
+                <th>Date</th><td><?= View::e($voucher['date_display']) ?></td></tr>
+            <tr><th>Type</th><td><?= View::e($voucher['type']) ?></td>
+                <th>Reference</th><td><?= View::e($voucher['reference']) ?></td></tr>
+            <tr><th>Note</th><td colspan="3"><?= View::e($voucher['note']) ?></td></tr>
+            <tr><th>Entered By</th><td><?= View::e($voucher['created_by_name']) ?></td>
+                <th>Amount</th><td><?= number_format((float) $voucher['amount'], 2) ?></td></tr>
         </table>
     </div>
 
@@ -24,11 +24,11 @@ use App\Core\View;
             <table>
                 <thead>
                 <tr>
-                    <th>লেজার</th>
-                    <th>কোড</th>
-                    <th>বিবরণ</th>
-                    <th class="num">ডেবিট</th>
-                    <th class="num">ক্রেডিট</th>
+                    <th>Ledger</th>
+                    <th>Code</th>
+                    <th>Note</th>
+                    <th class="num">Debit</th>
+                    <th class="num">Credit</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -44,6 +44,6 @@ use App\Core\View;
                 </tbody>
             </table>
         </div>
-        <p class="muted">কথায়: <?= View::e($voucher['amount_in_words']) ?></p>
+        <p class="muted">In words: <?= View::e($voucher['amount_in_words']) ?></p>
     </div>
 <?php endif; ?>

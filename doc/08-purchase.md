@@ -71,6 +71,7 @@ purchase_returns  ──< purchase_return_items  ──> stock_ledger (PurchaseR
 | `qty_base` | বেস ইউনিটে রূপান্তরিত (`qty × units.conversion`) — স্টকে এটাই যায় |
 | `unit_price` | প্রতি **ইনপুট ইউনিটে** ল্যান্ডেড ক্রয়মূল্য |
 | `line_total` | `qty × unit_price` |
+| `sale_price` | ঐচ্ছিক — `>0` হলে সেভের সময় প্রোডাক্টের (সবসময় প্রোডাক্ট-লেভেলে, ভ্যারিয়েন্টে না) `sale_price` ওভাররাইট করে — [09-media-and-purchase-pricing.md](09-media-and-purchase-pricing.md) §৩ |
 
 ### `stock_ledger` — স্টক খতিয়ান (panacea `product_stock_log`)
 
@@ -245,11 +246,11 @@ panacea `update.php` এর সরল রূপ — **reverse তারপর re
 
 | ফাইল | পরিবর্তন |
 |---|---|
-| `app/Modules/Catalog/Views/product/form.php` (`stock` ইনপুট — সিম্পল ~২৫০, ভ্যারিয়েন্ট গ্রিড ~১৯৯) | ইনপুট বাদ; বদলে read-only "বর্তমান স্টক" (`StockService::onHand`)। `stock_alert` থাকবে |
-| একই ফাইল, `purchase_price` (~১০২, ~১৯৩) | প্রথম মুভমেন্টের আগে editable (opening cost); পরে read-only |
-| `app/Modules/Catalog/Services/ProductService.php` (`stock` লেখা — ~১০৪, ~২৬৩, ~২৯৪) | save/update-এ `stock` কখনো লিখবে না; create-এ `stock = 0`। `product_variants.stock` যোগফল-সিঙ্ক `StockService`-এ সরে যাবে |
-| `ProductApi` / `VariantApi` PUT/POST | `stock` ফিল্ড উপেক্ষা (payload-এ থাকলেও) |
-| `doc/07-catalog.md` স্টক অংশ (~৮৪, ~১১৭) | নতুন নিয়মে হালনাগাদ, এই ডকে লিংক |
+| `app/Modules/Catalog/Views/product/form.php` (`stock` ইনপুট — সিম্পল ~২৫০, ভ্যারিয়েন্ট গ্রিড ~১৯৯) | ✅ ইনপুট বাদ; বদলে read-only "বর্তমান স্টক" (`StockService::onHand`)। `stock_alert` থাকবে |
+| একই ফাইল, `purchase_price` (প্রোডাক্ট ফর্ম + ভ্যারিয়েন্ট গ্রিড) | ✅ **সবসময় read-only** (২০২৬-০৯-০৯ চূড়ান্ত — "প্রথম মুভমেন্টের আগে editable" ব্যতিক্রমটা বাদ দেওয়া হয়েছে, স্টকের মতোই সবসময় Purchase থেকে আসে, নতুন প্রোডাক্টে 0 দেখায়) |
+| `app/Modules/Catalog/Services/ProductService.php` (`stock` লেখা — ~১০৪, ~২৬৩, ~২৯৪) | ✅ save/update-এ `stock` কখনো লিখবে না; create-এ `stock = 0`। `product_variants.stock` যোগফল-সিঙ্ক `StockService`-এ। **একই নিয়ম `purchase_price`-এও** — `save()`/`updateVariant()` কখনো লিখবে না, শুধু `CostService` লেখে |
+| `ProductApi` / `VariantApi` PUT/POST | `stock`/`purchase_price` ফিল্ড উপেক্ষা (payload-এ থাকলেও — ফর্ম আর পাঠায়ও না) |
+| `doc/07-catalog.md` স্টক অংশ (~৮৪, ~১১৭) | ✅ নতুন নিয়মে হালনাগাদ, এই ডকে লিংক |
 
 ---
 

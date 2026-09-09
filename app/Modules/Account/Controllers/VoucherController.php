@@ -25,7 +25,7 @@ final class VoucherController
         $form = VoucherApi::formData();
 
         return View::layout('layouts/admin', 'Account::voucher/list', [
-            'title'      => 'ভাউচার লিস্ট',
+            'title'      => 'Voucher List',
             'vouchers'   => $payload['vouchers'] ?? [],
             'pagination' => $payload['pagination'] ?? [],
             'messages'   => $payload['m'] ?? [],
@@ -46,7 +46,7 @@ final class VoucherController
         $form = VoucherApi::formData();
 
         return View::layout('layouts/admin', 'Account::voucher/entry', [
-            'title'    => 'নতুন ভাউচার',
+            'title'    => 'New Voucher',
             'types'    => $form['voucher_types'] ?? [],
             'ledgers'  => $form['ledgers'] ?? [],
             'natures'  => $form['natures'] ?? [],
@@ -62,7 +62,7 @@ final class VoucherController
         $payload = VoucherApi::show();
 
         return View::layout('layouts/admin', 'Account::voucher/show', [
-            'title'    => 'ভাউচার ডিটেইল',
+            'title'    => 'Voucher Detail',
             'voucher'  => $payload['voucher'] ?? [],
             'messages' => $payload['m'] ?? [],
         ]);

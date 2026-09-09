@@ -61,11 +61,11 @@ final class Voucher
         string $reference = ''
     ): int {
         if ($amount <= 0) {
-            throw new RuntimeException('ভাউচারের পরিমাণ শূন্যের বেশি হতে হবে।');
+            throw new RuntimeException('Voucher amount must be greater than zero.');
         }
 
         if ($debitLedger === $creditLedger) {
-            throw new RuntimeException('ডেবিট আর ক্রেডিট একই লেজার হতে পারবে না।');
+            throw new RuntimeException('Debit and credit cannot be the same ledger.');
         }
 
         return self::createCompound(
@@ -116,7 +116,7 @@ final class Voucher
             $voucherId = DB::insert('a_voucher_entry', $voucherData);
 
             if ($voucherId === 0) {
-                throw new RuntimeException('ভাউচার তৈরি করা যায়নি।');
+                throw new RuntimeException('Could not create the voucher.');
             }
 
             DB::update(
@@ -165,7 +165,7 @@ final class Voucher
         string $note = 'Opening balance'
     ): int {
         if (!$type->isOpening()) {
-            throw new RuntimeException($type->label() . ' একটি ওপেনিং ভাউচার টাইপ নয়।');
+            throw new RuntimeException($type->label() . ' is not an opening voucher type.');
         }
 
         $openingLedger = LedgerAccounts::systemLedger(AutoLedger::Opening);
@@ -198,14 +198,14 @@ final class Voucher
         $voucher = VoucherEntry::find($voucherId);
 
         if ($voucher === []) {
-            throw new RuntimeException("ভাউচার পাওয়া যায়নি (id=$voucherId)।");
+            throw new RuntimeException("Voucher not found (id=$voucherId).");
         }
 
         $entries = LedgerEntry::byVoucher($voucherId);
 
         if (count($entries) !== 2 && ($amount !== null || $debitLedger !== null || $creditLedger !== null)) {
             throw new RuntimeException(
-                'কম্পাউন্ড ভাউচারের পরিমাণ/লেজার এখান থেকে বদলানো যাবে না — ডিলিট করে নতুন করে তৈরি করুন।'
+                'A compound voucher\'s amount/ledger cannot be changed here — delete it and create a new one.'
             );
         }
 
@@ -227,7 +227,7 @@ final class Voucher
 
                 if ($amount !== null) {
                     if ($amount <= 0) {
-                        throw new RuntimeException('ভাউচারের পরিমাণ শূন্যের বেশি হতে হবে।');
+                        throw new RuntimeException('Voucher amount must be greater than zero.');
                     }
 
                     $data['debit']  = $isDebitRow ? $amount : 0;
@@ -345,15 +345,15 @@ final class Voucher
             $credit   = round((float) ($line['credit'] ?? 0), 4);
 
             if ($ledgerId <= 0) {
-                throw new RuntimeException('ভাউচারের প্রতিটি লাইনে ledger_id দিতে হবে।');
+                throw new RuntimeException('Every voucher line needs a ledger_id.');
             }
 
             if ($debit < 0 || $credit < 0) {
-                throw new RuntimeException('ডেবিট বা ক্রেডিট ঋণাত্মক হতে পারবে না।');
+                throw new RuntimeException('Debit or credit cannot be negative.');
             }
 
             if ($debit > 0 && $credit > 0) {
-                throw new RuntimeException('একই লাইনে ডেবিট আর ক্রেডিট দুটোই থাকতে পারবে না।');
+                throw new RuntimeException('A line cannot have both debit and credit.');
             }
 
             if ($debit === 0.0 && $credit === 0.0) {
@@ -369,7 +369,7 @@ final class Voucher
         }
 
         if (count($out) < 2) {
-            throw new RuntimeException('ভাউচারে অন্তত দুইটি লাইন লাগবে।');
+            throw new RuntimeException('A voucher needs at least two lines.');
         }
 
         return $out;
@@ -392,12 +392,12 @@ final class Voucher
 
         if (abs($debit - $credit) > self::EPSILON) {
             throw new RuntimeException(
-                sprintf('ভাউচার ব্যালেন্সড নয় — ডেবিট %.4f, ক্রেডিট %.4f', $debit, $credit)
+                sprintf('Voucher is not balanced — debit %.4f, credit %.4f', $debit, $credit)
             );
         }
 
         if ($debit <= 0) {
-            throw new RuntimeException('ভাউচারের মোট পরিমাণ শূন্যের বেশি হতে হবে।');
+            throw new RuntimeException('Voucher total must be greater than zero.');
         }
     }
 
@@ -410,7 +410,7 @@ final class Voucher
         $missing = array_diff($unique, $found);
 
         if ($missing !== []) {
-            throw new RuntimeException('লেজার পাওয়া যায়নি: ' . implode(', ', $missing));
+            throw new RuntimeException('Ledger not found: ' . implode(', ', $missing));
         }
     }
 }

@@ -78,6 +78,10 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
                 <label for="b_price">Unit Price</label>
                 <input id="b_price" type="number" step="0.01" min="0">
             </div>
+            <div style="flex:0 1 110px">
+                <label for="b_sale_price" title="Applies to the whole product, not just this color/size">Sale Price</label>
+                <input id="b_sale_price" type="number" step="0.01" min="0">
+            </div>
             <div style="flex:0 0 auto">
                 <button type="button" id="b_add">Add</button>
             </div>
@@ -91,22 +95,23 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
                     <th>Unit</th>
                     <th class="num">Qty</th>
                     <th class="num">Unit Price</th>
+                    <th class="num">Sale Price</th>
                     <th class="num">Line Total</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody id="cart-body">
-                    <tr id="cart-empty"><td colspan="6" class="muted" style="text-align:center">No items yet</td></tr>
+                    <tr id="cart-empty"><td colspan="7" class="muted" style="text-align:center">No items yet</td></tr>
                 </tbody>
                 <tfoot>
-                    <tr><td colspan="4" class="num">Sub Total</td><td class="num" id="f-sub">0.00</td><td></td></tr>
+                    <tr><td colspan="5" class="num">Sub Total</td><td class="num" id="f-sub">0.00</td><td></td></tr>
                     <tr>
-                        <td colspan="4" class="num">Discount</td>
+                        <td colspan="5" class="num">Discount</td>
                         <td class="num"><input id="discount" type="number" step="0.01" min="0" style="width:100px;text-align:right"
                                value="<?= (float) $v('discount', 0) ?>"></td>
                         <td></td>
                     </tr>
-                    <tr><td colspan="4" class="num"><strong>Total</strong></td><td class="num"><strong id="f-total">0.00</strong></td><td></td></tr>
+                    <tr><td colspan="5" class="num"><strong>Total</strong></td><td class="num"><strong id="f-total">0.00</strong></td><td></td></tr>
                 </tfoot>
             </table>
         </div>
@@ -126,7 +131,7 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
     var byId = {};
     PRODUCTS.forEach(function (p) { byId[p.id] = p; });
 
-    var cart = []; // {product_id, variant_id, unit_id, unit_name, label, qty, unit_price}
+    var cart = []; // {product_id, variant_id, unit_id, unit_name, label, qty, unit_price, sale_price}
 
     var $ = function (id) { return document.getElementById(id); };
 
@@ -138,12 +143,22 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
         $('b_product').appendChild(o);
     });
 
+    // 0 মানে "এখনো কোনো real দাম নাই" — ইনপুটে খালি দেখাই, "0" না (যাতে ভুল করে
+    // শূন্য দামে সাবমিট না হয়ে যায়; ইউজারকে আসল দাম টাইপ করতে হবে)
+    function priceOrEmpty(value) {
+        var n = parseFloat(value);
+        return n > 0 ? n : '';
+    }
+
     // ---- প্রোডাক্ট বদলালে ভ্যারিয়েন্ট ও দাম
     $('b_product').addEventListener('change', function () {
         var p = byId[parseInt(this.value, 10)];
         var wrap = $('b_variant_wrap');
         var sel = $('b_variant');
         sel.innerHTML = '';
+
+        // sale price is product-wide (not per-variant) — prefill from the product either way
+        $('b_sale_price').value = p ? priceOrEmpty(p.sale_price) : '';
 
         if (p && p.has_variant) {
             p.variants.forEach(function (vr) {
@@ -154,20 +169,21 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
                 sel.appendChild(o);
             });
             wrap.style.display = '';
-            $('b_price').value = p.variants.length ? p.variants[0].purchase_price : '';
+            // প্রতিটা ভ্যারিয়েন্টের নিজের দাম — কোনো প্যারেন্ট/প্রোডাক্ট-লেভেল দামে fallback হবে না
+            $('b_price').value = p.variants.length ? priceOrEmpty(p.variants[0].purchase_price) : '';
         } else {
             wrap.style.display = 'none';
-            $('b_price').value = p ? p.purchase_price : '';
+            $('b_price').value = p ? priceOrEmpty(p.purchase_price) : '';
         }
     });
 
     $('b_variant').addEventListener('change', function () {
         var opt = this.options[this.selectedIndex];
-        if (opt && opt.dataset.price) { $('b_price').value = opt.dataset.price; }
+        $('b_price').value = opt ? priceOrEmpty(opt.dataset.price) : '';
     });
 
     // ---- কার্টে যোগ
-    function addLine(productId, variantId, qty, price) {
+    function addLine(productId, variantId, qty, price, salePrice) {
         var p = byId[productId];
         if (!p) { return; }
 
@@ -186,7 +202,8 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
             unit_name:  p.unit_code,
             label:      label,
             qty:        qty,
-            unit_price: price
+            unit_price: price,
+            sale_price: salePrice || 0
         });
         render();
     }
@@ -195,12 +212,14 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
         var pid = parseInt($('b_product').value, 10);
         var qty = parseFloat($('b_qty').value) || 0;
         var price = parseFloat($('b_price').value) || 0;
+        var salePrice = parseFloat($('b_sale_price').value) || 0;
         var vid = $('b_variant_wrap').style.display === 'none' ? 0 : parseInt($('b_variant').value, 10) || 0;
 
         if (!pid || qty <= 0) { window.toast('e', 'Pick a product and quantity.'); return; }
 
-        addLine(pid, vid, qty, price);
+        addLine(pid, vid, qty, price, salePrice);
         $('b_qty').value = '';
+        $('b_sale_price').value = '';
     });
 
     function render() {
@@ -208,7 +227,7 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
         body.innerHTML = '';
 
         if (cart.length === 0) {
-            body.innerHTML = '<tr id="cart-empty"><td colspan="6" class="muted" style="text-align:center">No items yet</td></tr>';
+            body.innerHTML = '<tr id="cart-empty"><td colspan="7" class="muted" style="text-align:center">No items yet</td></tr>';
         }
 
         var sub = 0;
@@ -223,6 +242,7 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
                 '<td>' + line.unit_name + '</td>' +
                 '<td class="num">' + line.qty + '</td>' +
                 '<td class="num">' + line.unit_price.toFixed(2) + '</td>' +
+                '<td class="num">' + (line.sale_price ? line.sale_price.toFixed(2) : '—') + '</td>' +
                 '<td class="num">' + lt.toFixed(2) + '</td>' +
                 '<td><button type="button" class="ghost" data-rm="' + i + '">x</button></td>';
             body.appendChild(tr);
@@ -251,7 +271,8 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
             unit_name:  it.unit_code,
             label:      it.product_name,
             qty:        it.qty,
-            unit_price: it.unit_price
+            unit_price: it.unit_price,
+            sale_price: it.sale_price
         });
     });
     render();
@@ -276,7 +297,8 @@ $v = static fn (string $key, mixed $default = '') => $purchase[$key] ?? $default
                     variant_id: l.variant_id,
                     unit_id:    l.unit_id,
                     qty:        l.qty,
-                    unit_price: l.unit_price
+                    unit_price: l.unit_price,
+                    sale_price: l.sale_price || 0
                 };
             })
         };

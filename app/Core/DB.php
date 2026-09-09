@@ -169,7 +169,7 @@ final class DB
     public static function insert(string $table, array $data): int
     {
         if ($data === []) {
-            throw new RuntimeException("Insert into `$table` এ কোনো ডেটা নাই");
+            throw new RuntimeException("Insert into `$table` has no data");
         }
 
         $columns      = array_keys($data);
@@ -223,7 +223,7 @@ final class DB
             return 0;
         }
         if ($where === []) {
-            throw new RuntimeException("`$table` আপডেটে where শর্ত ছাড়া চালানো যাবে না");
+            throw new RuntimeException("Cannot update `$table` without a where condition");
         }
 
         $set    = [];
@@ -251,7 +251,7 @@ final class DB
     public static function delete(string $table, array $where): int
     {
         if ($where === []) {
-            throw new RuntimeException("`$table` ডিলিটে where শর্ত ছাড়া চালানো যাবে না");
+            throw new RuntimeException("Cannot delete from `$table` without a where condition");
         }
 
         $clause = [];

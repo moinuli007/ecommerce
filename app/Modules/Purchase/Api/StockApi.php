@@ -23,7 +23,7 @@ final class StockApi
         $productId = Request::int('product_id');
 
         if ($productId <= 0) {
-            return Response::error('product_id দিন।');
+            return Response::error('Please provide product_id.');
         }
 
         $variantId = Request::int('variant_id');
@@ -65,7 +65,7 @@ final class StockApi
         $adj = StockAdjustmentService::details(Request::paramInt('id'));
 
         return $adj === []
-            ? Response::error('সমন্বয় এন্ট্রি পাওয়া যায়নি।')
+            ? Response::error('Adjustment entry not found.')
             : Response::success('', ['adjustment' => $adj]);
     }
 
@@ -82,7 +82,7 @@ final class StockApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('সমন্বয় সংরক্ষণ হয়েছে।', ['adjustment' => StockAdjustmentService::details($id)]);
+        return Response::success('Adjustment saved.', ['adjustment' => StockAdjustmentService::details($id)]);
     }
 
     /** PUT /api/v1/stock/adjustments/{id} */
@@ -98,7 +98,7 @@ final class StockApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('সমন্বয় আপডেট হয়েছে।');
+        return Response::success('Adjustment updated.');
     }
 
     /** DELETE /api/v1/stock/adjustments/{id} */
@@ -110,7 +110,7 @@ final class StockApi
             return Response::error($e->getMessage());
         }
 
-        return $done ? Response::success('সমন্বয় ডিলিট হয়েছে।') : Response::error('পাওয়া যায়নি।');
+        return $done ? Response::success('Adjustment deleted.') : Response::error('Not found.');
     }
 
     // --------------------------------------------------------- ক্রয় ফেরত
@@ -136,7 +136,7 @@ final class StockApi
         $ret = PurchaseReturnService::details(Request::paramInt('id'));
 
         return $ret === []
-            ? Response::error('ফেরত এন্ট্রি পাওয়া যায়নি।')
+            ? Response::error('Return entry not found.')
             : Response::success('', ['return' => $ret]);
     }
 
@@ -153,7 +153,7 @@ final class StockApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ক্রয় ফেরত সংরক্ষণ হয়েছে।', ['return' => PurchaseReturnService::details($id)]);
+        return Response::success('Purchase return saved.', ['return' => PurchaseReturnService::details($id)]);
     }
 
     /** DELETE /api/v1/stock/returns/{id} */
@@ -165,6 +165,6 @@ final class StockApi
             return Response::error($e->getMessage());
         }
 
-        return $done ? Response::success('ফেরত এন্ট্রি ডিলিট হয়েছে।') : Response::error('পাওয়া যায়নি।');
+        return $done ? Response::success('Return entry deleted.') : Response::error('Not found.');
     }
 }

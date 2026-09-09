@@ -20,46 +20,46 @@ final class Menu
     {
         $groups = [
             [
-                'title' => 'প্রধান',
+                'title' => 'Main',
                 'icon'  => 'grid',
                 'items' => [
-                    ['label' => 'ড্যাশবোর্ড', 'path' => '/admin', 'icon' => 'home', 'match' => 'exact'],
+                    ['label' => 'Dashboard', 'path' => '/admin', 'icon' => 'home', 'match' => 'exact'],
                 ],
             ],
             [
-                'title' => 'ক্যাটালগ',
+                'title' => 'Catalog',
                 'icon'  => 'tag',
                 'items' => [
-                    ['label' => 'প্রোডাক্ট',   'path' => '/admin/products',   'icon' => 'box'],
-                    ['label' => 'ক্যাটাগরি',   'path' => '/admin/categories', 'icon' => 'folder'],
-                    ['label' => 'সাইজ / রঙ',   'path' => '/admin/attributes', 'icon' => 'sliders'],
-                    ['label' => 'ইউনিট',       'path' => '/admin/units',      'icon' => 'ruler'],
+                    ['label' => 'Products',    'path' => '/admin/products',   'icon' => 'box'],
+                    ['label' => 'Categories',  'path' => '/admin/categories', 'icon' => 'folder'],
+                    ['label' => 'Size / Color', 'path' => '/admin/attributes', 'icon' => 'sliders'],
+                    ['label' => 'Units',       'path' => '/admin/units',      'icon' => 'ruler'],
                 ],
             ],
             [
-                'title' => 'ক্রয়',
+                'title' => 'Purchase',
                 'icon'  => 'trend-down',
                 'items' => [
-                    ['label' => 'ক্রয় এন্ট্রি',  'path' => '/admin/purchases',          'icon' => 'in', 'match' => 'exact'],
-                    ['label' => 'ক্রয় ফেরত',    'path' => '/admin/stock/returns',      'icon' => 'out'],
-                    ['label' => 'স্টক সমন্বয়',  'path' => '/admin/stock/adjustments',  'icon' => 'sliders'],
-                    ['label' => 'সাপ্লায়ার',    'path' => '/admin/suppliers',          'icon' => 'user'],
+                    ['label' => 'Purchase Entry',     'path' => '/admin/purchases',          'icon' => 'in', 'match' => 'exact'],
+                    ['label' => 'Purchase Return',    'path' => '/admin/stock/returns',      'icon' => 'out'],
+                    ['label' => 'Stock Adjustment',   'path' => '/admin/stock/adjustments',  'icon' => 'sliders'],
+                    ['label' => 'Suppliers',          'path' => '/admin/suppliers',          'icon' => 'user'],
                 ],
             ],
             [
-                'title' => 'হিসাব',
+                'title' => 'Accounts',
                 'icon'  => 'book',
                 'items' => [
-                    ['label' => 'ভাউচার লিস্ট',        'path' => '/admin/vouchers',       'icon' => 'list', 'match' => 'exact'],
-                    ['label' => 'নতুন ভাউচার',         'path' => '/admin/vouchers/entry', 'icon' => 'plus'],
-                    ['label' => 'চার্ট অব অ্যাকাউন্টস', 'path' => '/admin/ledgers',        'icon' => 'layers', 'match' => 'exact'],
+                    ['label' => 'Voucher List',        'path' => '/admin/vouchers',       'icon' => 'list', 'match' => 'exact'],
+                    ['label' => 'New Voucher',         'path' => '/admin/vouchers/entry', 'icon' => 'plus'],
+                    ['label' => 'Chart of Accounts',   'path' => '/admin/ledgers',        'icon' => 'layers', 'match' => 'exact'],
                 ],
             ],
             [
-                'title' => 'রিপোর্ট',
+                'title' => 'Reports',
                 'icon'  => 'bar-chart',
                 'items' => [
-                    ['label' => 'ট্রায়াল ব্যালেন্স', 'path' => '/admin/reports/trial-balance', 'icon' => 'scale'],
+                    ['label' => 'Trial Balance', 'path' => '/admin/reports/trial-balance', 'icon' => 'scale'],
                 ],
             ],
 
@@ -129,8 +129,8 @@ final class Menu
     {
         // সেটিংস পেজ ফেজ ৭-এ আসবে; ডেড লিংক না রাখতে এখন বাদ
         return [
-            ['label' => 'আমার প্রোফাইল', 'path' => '/admin/profile', 'icon' => 'user'],
-            ['label' => 'লগআউট',         'path' => '/admin/logout',  'icon' => 'power', 'danger' => true],
+            ['label' => 'My Profile', 'path' => '/admin/profile', 'icon' => 'user'],
+            ['label' => 'Logout',     'path' => '/admin/logout',  'icon' => 'power', 'danger' => true],
         ];
     }
 

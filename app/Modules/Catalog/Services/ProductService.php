@@ -5,6 +5,7 @@ namespace App\Modules\Catalog\Services;
 use App\Core\DB;
 use App\Core\QueryBuilder;
 use App\Core\Slug;
+use App\Core\Upload;
 use App\Core\Utility;
 use App\Modules\Account\Services\CodeGenerator;
 use App\Modules\Catalog\Models\Attribute;
@@ -45,37 +46,36 @@ final class ProductService
         $name = trim((string) ($data['name'] ?? ''));
 
         if ($name === '') {
-            throw new RuntimeException('প্রোডাক্টের নাম দিতে হবে।');
+            throw new RuntimeException('Product name is required.');
         }
 
         $categoryId = (int) ($data['category_id'] ?? 0);
         $unitId     = (int) ($data['unit_id'] ?? 0);
 
         if (Category::find($categoryId) === []) {
-            throw new RuntimeException('ক্যাটাগরি বাছাই করুন।');
+            throw new RuntimeException('Please choose a category.');
         }
 
         if (Unit::find($unitId) === []) {
-            throw new RuntimeException('ইউনিট বাছাই করুন।');
+            throw new RuntimeException('Please choose a unit.');
         }
 
-        $salePrice     = (float) ($data['sale_price'] ?? 0);
-        $purchasePrice = (float) ($data['purchase_price'] ?? 0);
-        $offerPrice    = (float) ($data['offer_price'] ?? 0);
+        $salePrice  = (float) ($data['sale_price'] ?? 0);
+        $offerPrice = (float) ($data['offer_price'] ?? 0);
 
-        if ($salePrice < 0 || $purchasePrice < 0 || $offerPrice < 0) {
-            throw new RuntimeException('দাম ঋণাত্মক হতে পারবে না।');
+        if ($salePrice < 0 || $offerPrice < 0) {
+            throw new RuntimeException('Price cannot be negative.');
         }
 
         if ($offerPrice > 0 && $salePrice > 0 && $offerPrice >= $salePrice) {
-            throw new RuntimeException('অফার মূল্য বিক্রয় মূল্যের চেয়ে কম হতে হবে।');
+            throw new RuntimeException('Offer price must be less than the sale price.');
         }
 
         $offerStart = Utility::toTime((string) ($data['offer_start'] ?? ''), 0);
         $offerEnd   = Utility::toTime((string) ($data['offer_end'] ?? ''), 0);
 
         if ($offerStart > 0 && $offerEnd > 0 && $offerEnd < $offerStart) {
-            throw new RuntimeException('অফারের শেষ তারিখ শুরুর আগে হতে পারবে না।');
+            throw new RuntimeException('Offer end date cannot be before the start date.');
         }
 
         $row = [
@@ -85,7 +85,6 @@ final class ProductService
             'slug'              => Slug::unique((string) ($data['slug'] ?? '') ?: $name, 'products', $id),
             'short_description' => mb_substr((string) ($data['short_description'] ?? ''), 0, 500),
             'description'       => (string) ($data['description'] ?? ''),
-            'purchase_price'    => $purchasePrice,
             'sale_price'        => $salePrice,
             'offer_price'       => $offerPrice,
             'offer_start'       => $offerStart,
@@ -101,7 +100,8 @@ final class ProductService
         ];
 
         // স্টক এখানে বসে না — Purchase / Stock Adjustment থেকে StockService বসায়
-        // (doc/08-purchase.md §9)। নতুন প্রোডাক্টে DB ডিফল্ট 0.0000।
+        // purchase_price ও বসে না — CostService বসায় (weighted-average, doc/08-purchase.md §৫, §৯)।
+        // দুটোই নতুন প্রোডাক্টে DB ডিফল্ট 0.0000।
 
         return DB::transaction(static function () use ($row, $data, $id, $name): int {
             if ($id > 0) {
@@ -116,7 +116,7 @@ final class ProductService
             if ($sku === '') {
                 $sku = CodeGenerator::next('product', 'P');
             } elseif (Product::bySku($sku) !== []) {
-                throw new RuntimeException("'$sku' SKU আগে থেকেই আছে।");
+                throw new RuntimeException("SKU '$sku' already exists.");
             }
 
             $row['sku']         = $sku;
@@ -131,7 +131,7 @@ final class ProductService
         $product = Product::find($id);
 
         if ($product === []) {
-            throw new RuntimeException('প্রোডাক্ট পাওয়া যায়নি।');
+            throw new RuntimeException('Product not found.');
         }
 
         // ফেজ ৩-এ অর্ডার এলে এখানে "অর্ডারে ব্যবহৃত হয়েছে কি না" চেক যোগ হবে।
@@ -163,7 +163,7 @@ final class ProductService
         $product = Product::find($productId);
 
         if ($product === []) {
-            throw new RuntimeException('প্রোডাক্ট পাওয়া যায়নি।');
+            throw new RuntimeException('Product not found.');
         }
 
         $axes = self::resolveAxes($selection);
@@ -199,7 +199,6 @@ final class ProductService
                     'name'           => $label,
                     'sku'            => self::variantSku((string) $product['sku'], $combo, $productId),
                     'purchase_price' => (float) $product['purchase_price'],
-                    'sale_price'     => (float) $product['sale_price'],
                     'offer_price'    => (float) $product['offer_price'],
                     'stock'          => 0,
                     'sort_order'     => $index,
@@ -254,22 +253,22 @@ final class ProductService
         $variant = ProductVariant::find($variantId);
 
         if ($variant === []) {
-            throw new RuntimeException('ভ্যারিয়েন্ট পাওয়া যায়নি।');
+            throw new RuntimeException('Variant not found.');
         }
 
         $row = [];
 
         // স্টক এখানে বদলায় না — StockService এর দায়িত্ব (doc/08-purchase.md §৯)
-        foreach (['purchase_price', 'sale_price', 'offer_price'] as $field) {
-            if (array_key_exists($field, $data)) {
-                $value = (float) $data[$field];
+        // purchase_price ও বদলায় না — CostService বসায় (weighted-average, শুধু Purchase থেকে)
+        // sale_price ভ্যারিয়েন্টে নাই — সবসময় products.sale_price (একই প্রোডাক্টের সব রঙ/সাইজ এক দামে)
+        if (array_key_exists('offer_price', $data)) {
+            $offerPrice = (float) $data['offer_price'];
 
-                if ($value < 0) {
-                    throw new RuntimeException('দাম ঋণাত্মক হতে পারবে না।');
-                }
-
-                $row[$field] = $value;
+            if ($offerPrice < 0) {
+                throw new RuntimeException('Price cannot be negative.');
             }
+
+            $row['offer_price'] = $offerPrice;
         }
 
         foreach (['barcode', 'image'] as $field) {
@@ -304,16 +303,17 @@ final class ProductService
     /**
      * কার্যকর দাম — অফার চালু থাকলে অফার মূল্য, নাহলে স্বাভাবিক মূল্য।
      *
-     * অফারের সময়সীমা **প্রোডাক্টে** থাকে, দাম থাকতে পারে ভ্যারিয়েন্টে —
-     * তাই দুটোই লাগে।
+     * বিক্রয়মূল্য (`regular`) সবসময় **প্রোডাক্টের** — একই প্রোডাক্টের সব রঙ/সাইজ
+     * এক দামে বিক্রি হয়, ভ্যারিয়েন্টে আলাদা sale_price নাই। অফার (এবং তার
+     * সময়সীমা) প্রোডাক্টে থাকে, চাইলে কোনো ভ্যারিয়েন্টে আলাদা অফার-মূল্য থাকতে পারে।
      *
      * @param  array<string,mixed> $product
-     * @param  array<string,mixed> $variant খালি হলে প্রোডাক্টের নিজের দাম
+     * @param  array<string,mixed> $variant খালি হলে সাধারণ (variant-নির্দিষ্ট অফার না থাকলে)
      * @return array{price:float,regular:float,on_offer:bool,discount:float,discount_percent:float}
      */
     public static function effectivePrice(array $product, array $variant = []): array
     {
-        $regular = (float) ($variant['sale_price'] ?? 0) ?: (float) ($product['sale_price'] ?? 0);
+        $regular = (float) ($product['sale_price'] ?? 0);
         $offer   = (float) ($variant['offer_price'] ?? 0) ?: (float) ($product['offer_price'] ?? 0);
 
         $running = $offer > 0 && $offer < $regular && self::offerRunning($product);
@@ -412,28 +412,40 @@ final class ProductService
     // ছবি
     // -------------------------------------------------------------------------
 
-    /** @param array<string,mixed> $data path, alt?, variant_id?, is_primary?, sort_order? */
+    /**
+     * নতুন ছবি — কোন রঙের (Color অ্যাট্রিবিউট ভ্যালু) সেটা `attribute_value_id`
+     * দিয়ে ট্যাগ করা যায় (0 = সাধারণ, সব রঙের জন্য)। এতে একই রঙের সব সাইজ
+     * (ভ্যারিয়েন্ট) একই ছবি শেয়ার করে (doc/09-media-and-purchase-pricing.md M-01)।
+     *
+     * @param array<string,mixed> $data path, alt?, attribute_value_id?, is_primary?, sort_order?
+     */
     public static function addImage(int $productId, array $data): int
     {
         if (Product::find($productId) === []) {
-            throw new RuntimeException('প্রোডাক্ট পাওয়া যায়নি।');
+            throw new RuntimeException('Product not found.');
         }
 
         $path = trim((string) ($data['path'] ?? ''));
 
         if ($path === '') {
-            throw new RuntimeException('ছবির পাথ দিতে হবে।');
+            throw new RuntimeException('Image path is required.');
+        }
+
+        $attributeValueId = (int) ($data['attribute_value_id'] ?? 0);
+
+        if ($attributeValueId > 0 && AttributeValue::find($attributeValueId) === []) {
+            throw new RuntimeException('Color value not found.');
         }
 
         $first = !ProductImage::where('product_id', $productId)->exists();
 
         $imageId = ProductImage::create([
-            'product_id' => $productId,
-            'variant_id' => (int) ($data['variant_id'] ?? 0),
-            'path'       => $path,
-            'alt'        => (string) ($data['alt'] ?? ''),
-            'is_primary' => $first || (int) ($data['is_primary'] ?? 0) === 1 ? 1 : 0,
-            'sort_order' => (int) ($data['sort_order'] ?? 0),
+            'product_id'         => $productId,
+            'attribute_value_id' => $attributeValueId,
+            'path'               => $path,
+            'alt'                => (string) ($data['alt'] ?? ''),
+            'is_primary'         => $first || (int) ($data['is_primary'] ?? 0) === 1 ? 1 : 0,
+            'sort_order'         => (int) ($data['sort_order'] ?? 0),
         ]);
 
         if ($first || (int) ($data['is_primary'] ?? 0) === 1) {
@@ -441,6 +453,36 @@ final class ProductService
         }
 
         return $imageId;
+    }
+
+    /** @param array<string,mixed> $data is_primary?, alt?, attribute_value_id? */
+    public static function updateImage(int $imageId, array $data): bool
+    {
+        $image = ProductImage::find($imageId);
+
+        if ($image === []) {
+            throw new RuntimeException('Image not found.');
+        }
+
+        if ((int) ($data['is_primary'] ?? 0) === 1) {
+            ProductImage::makePrimary($imageId);
+        }
+
+        $row = [];
+
+        if (array_key_exists('alt', $data)) {
+            $row['alt'] = (string) $data['alt'];
+        }
+
+        if (array_key_exists('attribute_value_id', $data)) {
+            $row['attribute_value_id'] = (int) $data['attribute_value_id'];
+        }
+
+        if ($row !== []) {
+            ProductImage::updateById($imageId, $row);
+        }
+
+        return true;
     }
 
     public static function deleteImage(int $imageId): bool
@@ -452,6 +494,7 @@ final class ProductService
         }
 
         ProductImage::deleteById($imageId);
+        Upload::delete((string) $image['path']);
 
         // প্রধান ছবি মুছে ফেললে পরেরটাকে প্রধান করি
         if ((int) $image['is_primary'] === 1) {
@@ -582,7 +625,6 @@ final class ProductService
                 'barcode'        => $variant['barcode'],
                 'signature'      => $variant['signature'],
                 'purchase_price' => (float) $variant['purchase_price'],
-                'sale_price'     => (float) $variant['sale_price'],
                 'offer_price'    => (float) $variant['offer_price'],
                 'price'          => $price['price'],
                 'regular_price'  => $price['regular'],
@@ -597,6 +639,13 @@ final class ProductService
         $unit     = Unit::find((int) $product['unit_id']);
         $price    = self::effectivePrice($product);
         $images   = ProductImage::ofProduct($productId);
+
+        $colorValueIds = array_values(array_unique(array_filter(
+            array_map(static fn (array $i) => (int) $i['attribute_value_id'], $images)
+        )));
+        $colorValues = $colorValueIds === []
+            ? []
+            : Utility::keyBy(AttributeValue::whereIn('id', $colorValueIds)->get());
 
         return [
             'id'                => $productId,
@@ -633,13 +682,19 @@ final class ProductService
             'meta_description'  => $product['meta_description'],
             'variants'          => $variantList,
             'images'            => array_map(
-                static fn (array $i) => [
-                    'id'         => (int) $i['id'],
-                    'path'       => $i['path'],
-                    'alt'        => $i['alt'],
-                    'variant_id' => (int) $i['variant_id'],
-                    'is_primary' => (int) $i['is_primary'],
-                ],
+                static function (array $i) use ($colorValues): array {
+                    $valueId = (int) $i['attribute_value_id'];
+
+                    return [
+                        'id'                 => (int) $i['id'],
+                        'path'               => $i['path'],
+                        'alt'                => $i['alt'],
+                        'attribute_value_id' => $valueId,
+                        'color_name'         => $colorValues[$valueId]['value'] ?? '',
+                        'color_hex'          => $colorValues[$valueId]['color_hex'] ?? '',
+                        'is_primary'         => (int) $i['is_primary'],
+                    ];
+                },
                 $images
             ),
             'selected_values' => self::selectedValueIds($productId),
@@ -692,7 +747,7 @@ final class ProductService
             $attribute = Attribute::find($attributeId);
 
             if ($attribute === []) {
-                throw new RuntimeException("অ্যাট্রিবিউট পাওয়া যায়নি (id=$attributeId)।");
+                throw new RuntimeException("Attribute not found (id=$attributeId).");
             }
 
             $values = AttributeValue::whereIn('id', $valueIds)
@@ -702,7 +757,7 @@ final class ProductService
                 ->get();
 
             if (count($values) !== count($valueIds)) {
-                throw new RuntimeException("'{$attribute['name']}' এর কিছু ভ্যালু পাওয়া যায়নি।");
+                throw new RuntimeException("Some values for '{$attribute['name']}' were not found.");
             }
 
             $axes[(int) $attribute['sort_order'] . '_' . $attributeId] = array_map(

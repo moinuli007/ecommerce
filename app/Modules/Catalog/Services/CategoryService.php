@@ -4,6 +4,7 @@ namespace App\Modules\Catalog\Services;
 
 use App\Core\DB;
 use App\Core\Slug;
+use App\Core\Upload;
 use App\Core\Utility;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
@@ -29,7 +30,7 @@ final class CategoryService
         $name = trim((string) ($data['name'] ?? ''));
 
         if ($name === '') {
-            throw new RuntimeException('ক্যাটাগরির নাম দিতে হবে।');
+            throw new RuntimeException('Category name is required.');
         }
 
         $parentId = (int) ($data['parent_id'] ?? 0);
@@ -68,14 +69,50 @@ final class CategoryService
     public static function delete(int $id): bool
     {
         if (Category::children($id, false) !== []) {
-            throw new RuntimeException('এই ক্যাটাগরির নিচে সাব-ক্যাটাগরি আছে — আগে সেগুলো সরান।');
+            throw new RuntimeException('This category has sub-categories — remove them first.');
         }
 
         if (Product::where('category_id', $id)->exists()) {
-            throw new RuntimeException('এই ক্যাটাগরিতে প্রোডাক্ট আছে — আগে সেগুলো অন্য ক্যাটাগরিতে নিন।');
+            throw new RuntimeException('This category has products — move them to another category first.');
         }
 
         return Category::deleteById($id) > 0;
+    }
+
+    /**
+     * ছবি আপলোড — আগের ছবি থাকলে সেটা ডিলিট করে বদলে দেয়।
+     *
+     * @param array<string,mixed> $file $_FILES এন্ট্রি
+     */
+    public static function uploadImage(int $id, array $file): string
+    {
+        $category = Category::find($id);
+
+        if ($category === []) {
+            throw new RuntimeException('Category not found.');
+        }
+
+        $path = Upload::save($file, 'categories');
+
+        if ((string) $category['image'] !== '') {
+            Upload::delete((string) $category['image']);
+        }
+
+        Category::updateById($id, ['image' => $path]);
+
+        return $path;
+    }
+
+    public static function removeImage(int $id): void
+    {
+        $category = Category::find($id);
+
+        if ($category === [] || (string) $category['image'] === '') {
+            return;
+        }
+
+        Upload::delete((string) $category['image']);
+        Category::updateById($id, ['image' => '']);
     }
 
     /**
@@ -161,7 +198,7 @@ final class CategoryService
             $parent = Category::find($parentId);
 
             if ($parent === []) {
-                throw new RuntimeException('প্যারেন্ট ক্যাটাগরি পাওয়া যায়নি।');
+                throw new RuntimeException('Parent category not found.');
             }
 
             $path  = $parent['path'] . $categoryId . '/';
@@ -188,15 +225,15 @@ final class CategoryService
         }
 
         if ($id > 0 && $parentId === $id) {
-            throw new RuntimeException('ক্যাটাগরি নিজেই নিজের প্যারেন্ট হতে পারবে না।');
+            throw new RuntimeException('A category cannot be its own parent.');
         }
 
         if ($id > 0 && in_array($parentId, Category::descendantIds($id), true)) {
-            throw new RuntimeException('নিজের সাব-ক্যাটাগরিকে প্যারেন্ট বানানো যাবে না।');
+            throw new RuntimeException('A sub-category cannot be made the parent.');
         }
 
         if (Category::find($parentId) === []) {
-            throw new RuntimeException('প্যারেন্ট ক্যাটাগরি পাওয়া যায়নি।');
+            throw new RuntimeException('Parent category not found.');
         }
     }
 

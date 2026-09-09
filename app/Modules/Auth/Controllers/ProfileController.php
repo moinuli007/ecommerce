@@ -19,7 +19,7 @@ final class ProfileController
         $payload = AuthApi::me();
 
         return View::layout('layouts/admin', 'Auth::profile', [
-            'title'    => 'আমার প্রোফাইল',
+            'title'    => 'My Profile',
             'user'     => $payload['user'] ?? [],
             'messages' => $payload['m'] ?? [],
         ]);

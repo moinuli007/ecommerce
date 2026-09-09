@@ -22,7 +22,7 @@ final class StockController
         $payload = StockApi::adjustments();
 
         return View::layout('layouts/admin', 'Purchase::stock/adjustment-list', [
-            'title'       => 'স্টক সমন্বয়',
+            'title'       => 'Stock Adjustments',
             'adjustments' => $payload['adjustments'] ?? [],
             'filters'     => ['q' => Request::string('q')],
             'messages'    => $payload['m'] ?? [],
@@ -53,7 +53,7 @@ final class StockController
         }
 
         return View::layout('layouts/admin', 'Purchase::stock/adjustment-form', [
-            'title'      => $id > 0 ? 'সমন্বয় এডিট' : 'নতুন স্টক সমন্বয়',
+            'title'      => $id > 0 ? 'Edit Adjustment' : 'New Stock Adjustment',
             'adjustment' => $adjustment,
             'products'   => $form['products'] ?? [],
             'messages'   => [],
@@ -68,7 +68,7 @@ final class StockController
         $payload = StockApi::returns();
 
         return View::layout('layouts/admin', 'Purchase::stock/return-list', [
-            'title'    => 'ক্রয় ফেরত',
+            'title'    => 'Purchase Returns',
             'returns'  => $payload['returns'] ?? [],
             'filters'  => ['q' => Request::string('q')],
             'messages' => $payload['m'] ?? [],
@@ -85,7 +85,7 @@ final class StockController
         );
 
         return View::layout('layouts/admin', 'Purchase::stock/return-form', [
-            'title'     => 'নতুন ক্রয় ফেরত',
+            'title'     => 'New Purchase Return',
             'purchases' => $purchases,
             'messages'  => [],
         ]);

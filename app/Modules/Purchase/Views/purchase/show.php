@@ -34,6 +34,7 @@ $p = $purchase;
                     <th class="num">Qty</th>
                     <th>Unit</th>
                     <th class="num">Unit Price</th>
+                    <th class="num">Sale Price</th>
                     <th class="num">Line Total</th>
                 </tr>
                 </thead>
@@ -45,14 +46,15 @@ $p = $purchase;
                         <td class="num"><?= rtrim(rtrim(number_format($item['qty'], 4), '0'), '.') ?></td>
                         <td><?= View::e($item['unit_code']) ?></td>
                         <td class="num"><?= number_format($item['unit_price'], 2) ?></td>
+                        <td class="num"><?= $item['sale_price'] > 0 ? number_format($item['sale_price'], 2) : '—' ?></td>
                         <td class="num"><?= number_format($item['line_total'], 2) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
                 <tfoot>
-                    <tr><td colspan="5" class="num">Sub Total</td><td class="num"><?= number_format($p['sub_total'], 2) ?></td></tr>
-                    <tr><td colspan="5" class="num">Discount</td><td class="num"><?= number_format($p['discount'], 2) ?></td></tr>
-                    <tr><td colspan="5" class="num"><strong>Total</strong></td><td class="num"><strong><?= number_format($p['total'], 2) ?></strong></td></tr>
+                    <tr><td colspan="6" class="num">Sub Total</td><td class="num"><?= number_format($p['sub_total'], 2) ?></td></tr>
+                    <tr><td colspan="6" class="num">Discount</td><td class="num"><?= number_format($p['discount'], 2) ?></td></tr>
+                    <tr><td colspan="6" class="num"><strong>Total</strong></td><td class="num"><strong><?= number_format($p['total'], 2) ?></strong></td></tr>
                 </tfoot>
             </table>
         </div>

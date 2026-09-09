@@ -75,6 +75,8 @@ Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
         Router::post('/categories',        [CategoryApi::class, 'store'],   ['name' => 'api.category.store']);
         Router::put('/categories/{id}',    [CategoryApi::class, 'update'],  ['name' => 'api.category.update']);
         Router::delete('/categories/{id}', [CategoryApi::class, 'destroy'], ['name' => 'api.category.destroy']);
+        Router::post('/categories/{id}/image',   [CategoryApi::class, 'uploadImage'], ['name' => 'api.category.image.store']);
+        Router::delete('/categories/{id}/image', [CategoryApi::class, 'removeImage'], ['name' => 'api.category.image.destroy']);
 
         // ইউনিট
         Router::get('/units',              [UnitApi::class, 'index'],        ['name' => 'api.unit.index']);
@@ -131,6 +133,7 @@ Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
         Router::post('/products/{id}/variants',  [ProductApi::class, 'syncVariants'], ['name' => 'api.product.variants']);
         Router::post('/products/{id}/images',    [ProductApi::class, 'addImage'],     ['name' => 'api.product.addImage']);
         Router::put('/variants/{id}',            [ProductApi::class, 'updateVariant'], ['name' => 'api.variant.update']);
+        Router::put('/images/{id}',              [ProductApi::class, 'updateImage'],  ['name' => 'api.image.update']);
         Router::delete('/images/{id}',           [ProductApi::class, 'deleteImage'],  ['name' => 'api.image.destroy']);
     });
 });

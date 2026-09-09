@@ -11,11 +11,11 @@ $messages = $messages ?? [];
 $next     = $next ?? '/admin';
 ?>
 <!doctype html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>লগইন — <?= View::e($appName ?? '') ?></title>
+    <title>Login — <?= View::e($appName ?? '') ?></title>
     <style>
         :root {
             --bg:#f3f5f9; --card:#fff; --fg:#1c2024; --muted:#6b7280; --line:#e4e8ee;
@@ -77,7 +77,7 @@ $next     = $next ?? '/admin';
         <span class="logo-mark"><?= View::e(mb_substr((string) ($appName ?? 'E'), 0, 1)) ?></span>
         <strong><?= View::e($appName ?? '') ?></strong>
     </div>
-    <p class="sub">অ্যাডমিন প্যানেলে প্রবেশ করুন</p>
+    <p class="sub">Sign in to the admin panel</p>
 
     <?php foreach ($messages as $message): ?>
         <div class="msg msg-<?= View::e($message[0]) ?>"><?= View::e($message[1]) ?></div>
@@ -85,15 +85,15 @@ $next     = $next ?? '/admin';
 
     <input type="hidden" name="next" value="<?= View::e($next) ?>">
 
-    <label for="username">ইমেইল বা মোবাইল</label>
+    <label for="username">Email or Mobile</label>
     <input id="username" name="username" autocomplete="username" required autofocus>
 
-    <label for="password">পাসওয়ার্ড</label>
+    <label for="password">Password</label>
     <input id="password" name="password" type="password" autocomplete="current-password" required>
 
-    <button type="submit">লগইন</button>
+    <button type="submit">Login</button>
 
-    <p class="foot"><a href="<?= View::e($appUrl ?? '/') ?>">← স্টোরে ফিরে যান</a></p>
+    <p class="foot"><a href="<?= View::e($appUrl ?? '/') ?>">← Back to store</a></p>
 </form>
 </body>
 </html>

@@ -41,7 +41,7 @@ final class PurchaseApi
         $purchase = PurchaseService::details(Request::paramInt('id'));
 
         if ($purchase === []) {
-            return Response::error('ক্রয় এন্ট্রি পাওয়া যায়নি।');
+            return Response::error('Purchase entry not found.');
         }
 
         return Response::success('', ['purchase' => $purchase]);
@@ -55,7 +55,7 @@ final class PurchaseApi
         $suppliers = Supplier::active()->orderBy('name')->get();
 
         $products = DB::select(
-            "SELECT p.id, p.name, p.sku, p.has_variant, p.unit_id, p.purchase_price,
+            "SELECT p.id, p.name, p.sku, p.has_variant, p.unit_id, p.purchase_price, p.sale_price,
                     u.name AS unit_name, u.code AS unit_code
                FROM products p
                JOIN units u ON u.id = p.unit_id
@@ -96,6 +96,7 @@ final class PurchaseApi
                 'unit_name'      => $p['unit_name'],
                 'unit_code'      => $p['unit_code'],
                 'purchase_price' => (float) $p['purchase_price'],
+                'sale_price'     => (float) $p['sale_price'],
                 'variants'       => $byProduct[(int) $p['id']] ?? [],
             ], $products),
         ]);
@@ -117,7 +118,7 @@ final class PurchaseApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ক্রয় সংরক্ষণ হয়েছে।', ['purchase' => PurchaseService::details($id)]);
+        return Response::success('Purchase saved.', ['purchase' => PurchaseService::details($id)]);
     }
 
     /** PUT /api/v1/purchases/{id} */
@@ -138,7 +139,7 @@ final class PurchaseApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ক্রয় আপডেট হয়েছে।', ['purchase' => PurchaseService::details($id)]);
+        return Response::success('Purchase updated.', ['purchase' => PurchaseService::details($id)]);
     }
 
     /** DELETE /api/v1/purchases/{id} */
@@ -151,7 +152,7 @@ final class PurchaseApi
         }
 
         return $done
-            ? Response::success('ক্রয় এন্ট্রি ডিলিট হয়েছে।')
-            : Response::error('ক্রয় এন্ট্রি পাওয়া যায়নি।');
+            ? Response::success('Purchase entry deleted.')
+            : Response::error('Purchase entry not found.');
     }
 }

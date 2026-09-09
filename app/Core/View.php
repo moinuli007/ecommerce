@@ -44,7 +44,7 @@ final class View
         $file = self::resolve($name);
 
         if ($file === null) {
-            throw new RuntimeException("ভিউ পাওয়া যায়নি: $name");
+            throw new RuntimeException("View not found: $name");
         }
 
         return self::evaluate($file, array_merge(self::$shared, $data));

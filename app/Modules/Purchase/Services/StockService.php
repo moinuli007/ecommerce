@@ -100,7 +100,11 @@ final class StockService
      *
      * সিম্পল প্রোডাক্ট  → products.stock = SUM(খতিয়ান, variant 0)
      * ভ্যারিয়েন্ট      → product_variants.stock = SUM(খতিয়ান, ওই variant)
-     *                    এবং products.stock = active ভ্যারিয়েন্টের যোগফল
+     *                    এবং products.stock = **সব** ভ্যারিয়েন্টের (isActive নির্বিশেষে)
+     *                    যোগফল — নিষ্ক্রিয় ভ্যারিয়েন্টের স্টকও বাস্তবে আছে (কেনা হয়েছে,
+     *                    গুদামে আছে), শুধু ওই নির্দিষ্ট কম্বিনেশন আর বিক্রির জন্য দেখানো
+     *                    হয় না। P-02 নীতি — ক্যাশড কলাম সবসময় stock_ledger এর সত্যের
+     *                    সাথে মেলে — এখানে isActive ফিল্টার দিলে সেটা ভাঙত (২০২৬-০৯-০৯)।
      */
     public static function refreshCached(int $productId, int $variantId = 0): void
     {
@@ -114,7 +118,7 @@ final class StockService
             DB::update(
                 'products',
                 ['stock' => (float) DB::scalar(
-                    'SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ? AND isActive = 1',
+                    'SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ?',
                     [$productId],
                     0
                 )],

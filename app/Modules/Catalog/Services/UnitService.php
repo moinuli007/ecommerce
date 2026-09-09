@@ -30,7 +30,7 @@ final class UnitService
         $name = trim((string) ($data['name'] ?? ''));
 
         if ($name === '') {
-            throw new RuntimeException('গ্রুপের নাম দিতে হবে।');
+            throw new RuntimeException('Group name is required.');
         }
 
         $row = [
@@ -51,7 +51,7 @@ final class UnitService
     public static function deleteGroup(int $id): bool
     {
         if (Unit::where('unit_group_id', $id)->exists()) {
-            throw new RuntimeException('এই গ্রুপে ইউনিট আছে — আগে সেগুলো সরান।');
+            throw new RuntimeException('This group has units — remove them first.');
         }
 
         return UnitGroup::deleteById($id) > 0;
@@ -71,25 +71,25 @@ final class UnitService
         $groupId = (int) ($data['unit_group_id'] ?? 0);
 
         if ($name === '' || $code === '') {
-            throw new RuntimeException('ইউনিটের নাম ও কোড দুটোই দিতে হবে।');
+            throw new RuntimeException('Unit name and code are both required.');
         }
 
         if (UnitGroup::find($groupId) === []) {
-            throw new RuntimeException('ইউনিট গ্রুপ পাওয়া যায়নি।');
+            throw new RuntimeException('Unit group not found.');
         }
 
         // কোড ইউনিক
         $clash = Unit::byCode($code);
 
         if ($clash !== [] && (int) $clash['id'] !== $id) {
-            throw new RuntimeException("'$code' কোডের ইউনিট আগে থেকেই আছে।");
+            throw new RuntimeException("A unit with code '$code' already exists.");
         }
 
         $isBase     = (int) ($data['is_base'] ?? 0) === 1;
         $conversion = $isBase ? 1.0 : (float) ($data['conversion'] ?? 0);
 
         if (!$isBase && $conversion <= 0) {
-            throw new RuntimeException('রূপান্তরের হার শূন্যের বেশি হতে হবে।');
+            throw new RuntimeException('Conversion rate must be greater than zero.');
         }
 
         $row = [
@@ -127,15 +127,15 @@ final class UnitService
         $unit = Unit::find($id);
 
         if ($unit === []) {
-            throw new RuntimeException('ইউনিট পাওয়া যায়নি।');
+            throw new RuntimeException('Unit not found.');
         }
 
         if (Product::where('unit_id', $id)->exists()) {
-            throw new RuntimeException('এই ইউনিট প্রোডাক্টে ব্যবহৃত হচ্ছে — ডিলিট করা যাবে না।');
+            throw new RuntimeException('This unit is used by a product — it cannot be deleted.');
         }
 
         if ((int) $unit['is_base'] === 1 && Unit::ofGroup((int) $unit['unit_group_id']) !== []) {
-            throw new RuntimeException('বেস ইউনিট ডিলিট করার আগে গ্রুপের অন্য ইউনিটগুলো সরান।');
+            throw new RuntimeException('Remove the group\'s other units before deleting the base unit.');
         }
 
         return Unit::deleteById($id) > 0;
@@ -151,7 +151,7 @@ final class UnitService
         $unit = Unit::find($unitId);
 
         if ($unit === []) {
-            throw new RuntimeException('ইউনিট পাওয়া যায়নি।');
+            throw new RuntimeException('Unit not found.');
         }
 
         return round($quantity * (float) $unit['conversion'], 6);
@@ -163,7 +163,7 @@ final class UnitService
         $unit = Unit::find($unitId);
 
         if ($unit === [] || (float) $unit['conversion'] <= 0) {
-            throw new RuntimeException('ইউনিট পাওয়া যায়নি বা রূপান্তরের হার ভুল।');
+            throw new RuntimeException('Unit not found or the conversion rate is invalid.');
         }
 
         return round($quantity / (float) $unit['conversion'], 6);
@@ -176,17 +176,17 @@ final class UnitService
         $to   = Unit::find($toUnitId);
 
         if ($from === [] || $to === []) {
-            throw new RuntimeException('ইউনিট পাওয়া যায়নি।');
+            throw new RuntimeException('Unit not found.');
         }
 
         if ((int) $from['unit_group_id'] !== (int) $to['unit_group_id']) {
             throw new RuntimeException(
-                "'{$from['name']}' থেকে '{$to['name']}' এ রূপান্তর হবে না — দুটো আলাদা গ্রুপের ইউনিট।"
+                "Cannot convert '{$from['name']}' to '{$to['name']}' — they belong to different groups."
             );
         }
 
         if ((float) $to['conversion'] <= 0) {
-            throw new RuntimeException('রূপান্তরের হার ভুল।');
+            throw new RuntimeException('Invalid conversion rate.');
         }
 
         return round($quantity * (float) $from['conversion'] / (float) $to['conversion'], 6);

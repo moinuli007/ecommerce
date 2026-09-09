@@ -26,7 +26,7 @@ final class LoginController
         }
 
         return View::render('auth/login', [
-            'title'    => 'অ্যাডমিন লগইন',
+            'title'    => 'Admin Login',
             'next'     => self::safeNext(),
             'messages' => Message::flush(),
         ]);
@@ -49,7 +49,7 @@ final class LoginController
 
         if (!Auth::isAdmin()) {
             Auth::logout();
-            Message::flash(Message::ERROR, 'এই অ্যাকাউন্টের অ্যাডমিন প্যানেলে প্রবেশাধিকার নাই।');
+            Message::flash(Message::ERROR, 'This account does not have access to the admin panel.');
 
             self::redirect('/admin/login');
         }
@@ -76,7 +76,7 @@ final class LoginController
     public static function logout(): string
     {
         Auth::logout();
-        Message::flash(Message::SUCCESS, 'লগআউট হয়েছে।');
+        Message::flash(Message::SUCCESS, 'Logged out.');
 
         self::redirect('/admin/login');
     }

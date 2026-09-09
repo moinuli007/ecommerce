@@ -18,7 +18,7 @@ final class PurchaseController
         $payload = PurchaseApi::index();
 
         return View::layout('layouts/admin', 'Purchase::purchase/list', [
-            'title'      => 'ক্রয়',
+            'title'      => 'Purchases',
             'purchases'  => $payload['purchases'] ?? [],
             'pagination' => $payload['pagination'] ?? [],
             'filters'    => ['q' => Request::string('q')],
@@ -32,7 +32,7 @@ final class PurchaseController
         $form = PurchaseApi::formData();
 
         return View::layout('layouts/admin', 'Purchase::purchase/form', [
-            'title'     => 'নতুন ক্রয়',
+            'title'     => 'New Purchase',
             'purchase'  => [],
             'suppliers' => $form['suppliers'] ?? [],
             'products'  => $form['products'] ?? [],
@@ -52,7 +52,7 @@ final class PurchaseController
         $purchase = PurchaseApi::show()['purchase'] ?? [];
 
         return View::layout('layouts/admin', 'Purchase::purchase/form', [
-            'title'     => 'ক্রয় এডিট',
+            'title'     => 'Edit Purchase',
             'purchase'  => $purchase,
             'suppliers' => $form['suppliers'] ?? [],
             'products'  => $form['products'] ?? [],
@@ -69,7 +69,7 @@ final class PurchaseController
         $purchase = PurchaseApi::show()['purchase'] ?? [];
 
         return View::layout('layouts/admin', 'Purchase::purchase/show', [
-            'title'    => 'ক্রয় ' . ($purchase['code'] ?? ''),
+            'title'    => 'Purchase ' . ($purchase['code'] ?? ''),
             'purchase' => $purchase,
             'messages' => [],
         ]);

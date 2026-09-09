@@ -29,7 +29,7 @@ final class AttributeService
         $code = trim((string) ($data['code'] ?? ''));
 
         if ($name === '') {
-            throw new RuntimeException('অ্যাট্রিবিউটের নাম দিতে হবে।');
+            throw new RuntimeException('Attribute name is required.');
         }
 
         if ($code === '') {
@@ -39,13 +39,13 @@ final class AttributeService
         $clash = Attribute::byCode($code);
 
         if ($clash !== [] && (int) $clash['id'] !== $id) {
-            throw new RuntimeException("'$code' কোডের অ্যাট্রিবিউট আগে থেকেই আছে।");
+            throw new RuntimeException("An attribute with code '$code' already exists.");
         }
 
         $type = (string) ($data['type'] ?? 'select');
 
         if (!in_array($type, ['select', 'color'], true)) {
-            throw new RuntimeException('অ্যাট্রিবিউটের ধরন select বা color হতে হবে।');
+            throw new RuntimeException('Attribute type must be select or color.');
         }
 
         $row = [
@@ -68,7 +68,7 @@ final class AttributeService
     public static function delete(int $id): bool
     {
         if (self::valueInUse(0, $id)) {
-            throw new RuntimeException('এই অ্যাট্রিবিউট প্রোডাক্ট ভ্যারিয়েন্টে ব্যবহৃত হচ্ছে — ডিলিট করা যাবে না।');
+            throw new RuntimeException('This attribute is used by a product variant — it cannot be deleted.');
         }
 
         return Attribute::deleteById($id) > 0;
@@ -87,11 +87,11 @@ final class AttributeService
         $attribute = Attribute::find($attributeId);
 
         if ($attribute === []) {
-            throw new RuntimeException('অ্যাট্রিবিউট পাওয়া যায়নি।');
+            throw new RuntimeException('Attribute not found.');
         }
 
         if ($value === '') {
-            throw new RuntimeException('ভ্যালু দিতে হবে।');
+            throw new RuntimeException('Value is required.');
         }
 
         $code = trim((string) ($data['code'] ?? '')) ?: strtoupper(
@@ -108,7 +108,7 @@ final class AttributeService
             ->first();
 
         if ($clash !== [] && (int) $clash['id'] !== $id) {
-            throw new RuntimeException("'$code' কোডের ভ্যালু এই অ্যাট্রিবিউটে আগে থেকেই আছে।");
+            throw new RuntimeException("A value with code '$code' already exists for this attribute.");
         }
 
         $row = [
@@ -133,7 +133,7 @@ final class AttributeService
     {
         if (self::valueInUse($id)) {
             throw new RuntimeException(
-                'এই ভ্যালু কোনো প্রোডাক্ট ভ্যারিয়েন্টে ব্যবহৃত হচ্ছে — ডিলিটের বদলে নিষ্ক্রিয় করুন।'
+                'This value is used by a product variant or image — deactivate it instead of deleting.'
             );
         }
 
@@ -200,10 +200,18 @@ final class AttributeService
             ) > 0;
         }
 
-        return (int) DB::scalar(
+        $inVariant = (int) DB::scalar(
             'SELECT COUNT(*) FROM product_variant_values WHERE attribute_value_id = ?',
             [$valueId],
             0
         ) > 0;
+
+        $inImage = (int) DB::scalar(
+            'SELECT COUNT(*) FROM product_images WHERE attribute_value_id = ?',
+            [$valueId],
+            0
+        ) > 0;
+
+        return $inVariant || $inImage;
     }
 }

@@ -12,40 +12,40 @@ $total = $report['total'] ?? ['debit' => 0, 'credit' => 0];
 <div class="card">
     <form class="filters" method="get">
         <div>
-            <label for="from">থেকে</label>
+            <label for="from">From</label>
             <input id="from" name="from" type="date" value="<?= View::e($filters['from']) ?>">
         </div>
         <div>
-            <label for="to">পর্যন্ত</label>
+            <label for="to">To</label>
             <input id="to" name="to" type="date" value="<?= View::e($filters['to']) ?>">
         </div>
-        <button type="submit">দেখুন</button>
+        <button type="submit">View</button>
     </form>
 </div>
 
 <div class="card">
     <?php if (!($report['is_balanced'] ?? true)): ?>
         <div class="msg msg-e">
-            ⚠ ট্রায়াল ব্যালেন্স মিলছে না — ডেবিট আর ক্রেডিটের যোগফল সমান নয়।
-            কোথাও সরাসরি DB-তে এন্ট্রি করা হয়েছে কি না দেখুন।
+            ⚠ Trial balance doesn't match — debit and credit totals aren't equal.
+            Check whether any entries were made directly in the DB.
         </div>
     <?php endif; ?>
 
     <?php if ($rows === []): ?>
-        <div class="empty">এই সময়ে কোনো লেনদেন নাই।</div>
+        <div class="empty">No transactions in this period.</div>
     <?php else: ?>
         <div class="scroll">
             <table>
                 <thead>
                 <tr>
-                    <th>লেজার</th>
-                    <th>কোড</th>
-                    <th>চার্ট</th>
-                    <th>মাস্টার</th>
-                    <th class="num">ডেবিট</th>
-                    <th class="num">ক্রেডিট</th>
-                    <th class="num">ব্যালেন্স (Dr)</th>
-                    <th class="num">ব্যালেন্স (Cr)</th>
+                    <th>Ledger</th>
+                    <th>Code</th>
+                    <th>Chart</th>
+                    <th>Master</th>
+                    <th class="num">Debit</th>
+                    <th class="num">Credit</th>
+                    <th class="num">Balance (Dr)</th>
+                    <th class="num">Balance (Cr)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -64,7 +64,7 @@ $total = $report['total'] ?? ['debit' => 0, 'credit' => 0];
                 </tbody>
                 <tfoot>
                 <tr>
-                    <td colspan="4"><strong>মোট</strong></td>
+                    <td colspan="4"><strong>Total</strong></td>
                     <td class="num"><strong><?= number_format((float) $total['debit'], 2) ?></strong></td>
                     <td class="num"><strong><?= number_format((float) $total['credit'], 2) ?></strong></td>
                     <td colspan="2"></td>

@@ -16,7 +16,7 @@
  */
 
 if (PHP_SAPI !== 'cli') {
-    exit("এই স্ক্রিপ্টটা শুধু কমান্ড লাইন থেকে চলে।\n");
+    exit("This script only runs from the command line.\n");
 }
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -50,7 +50,7 @@ $bootstrapConn->query(
 );
 $bootstrapConn->close();
 
-echo "✓ ডেটাবেজ প্রস্তুত: $database\n";
+echo "✓ Database ready: $database\n";
 
 // ---------------------------------------------------------------------------
 // schema + seed
@@ -63,7 +63,7 @@ sort($seed);
 
 foreach (array_merge($schema, $seed) as $file) {
     runSqlFile($file);
-    echo '✓ চালানো হয়েছে: ' . basename($file) . "\n";
+    echo '✓ Ran: ' . basename($file) . "\n";
 }
 
 // --demo দিলে ডেমো ডেটাও (রেফারেন্স সাইটের ক্যাটাগরি গাছ ইত্যাদি)
@@ -73,7 +73,7 @@ if (isset($options['demo'])) {
 
     foreach ($demo as $file) {
         runSqlFile($file);
-        echo '✓ ডেমো: ' . basename($file) . "\n";
+        echo '✓ Demo: ' . basename($file) . "\n";
     }
 }
 
@@ -95,14 +95,14 @@ if (!isset($options['skip-admin'])) {
             'updated_at' => time(),
         ]);
 
-        echo "✓ অ্যাডমিন তৈরি হয়েছে: $adminEmail / $adminPassword\n";
-        echo "  ⚠ লগইন করার পর পাসওয়ার্ড বদলে নিন।\n";
+        echo "✓ Admin created: $adminEmail / $adminPassword\n";
+        echo "  ⚠ Change the password after logging in.\n";
     } else {
-        echo "· অ্যাডমিন আগে থেকেই আছে: $adminEmail\n";
+        echo "· Admin already exists: $adminEmail\n";
     }
 }
 
-echo "\nইনস্টল শেষ। এখন দেখুন: " . Env::get('APP_URL') . "/admin/login\n";
+echo "\nInstall finished. Now visit: " . Env::get('APP_URL') . "/admin/login\n";
 
 // ---------------------------------------------------------------------------
 
@@ -116,7 +116,7 @@ function runSqlFile(string $path): void
     $sql = file_get_contents($path);
 
     if ($sql === false) {
-        throw new RuntimeException("SQL ফাইল পড়া যায়নি: $path");
+        throw new RuntimeException("Could not read the SQL file: $path");
     }
 
     $connection = DB::connection();

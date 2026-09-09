@@ -30,7 +30,7 @@ final class CategoryApi
         $category = Category::find(Request::paramInt('id'));
 
         if ($category === []) {
-            return Response::error('ক্যাটাগরি পাওয়া যায়নি।');
+            return Response::error('Category not found.');
         }
 
         return Response::success('', [
@@ -53,7 +53,7 @@ final class CategoryApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ক্যাটাগরি যোগ হয়েছে।', ['category' => Category::find($id)]);
+        return Response::success('Category added.', ['category' => Category::find($id)]);
     }
 
     /** PUT /api/v1/categories/{id} */
@@ -62,7 +62,7 @@ final class CategoryApi
         $id = Request::paramInt('id');
 
         if (Category::find($id) === []) {
-            return Response::error('ক্যাটাগরি পাওয়া যায়নি।');
+            return Response::error('Category not found.');
         }
 
         if (!Validator::check(Request::all(), ['name' => 'required|max:150'])) {
@@ -75,7 +75,7 @@ final class CategoryApi
             return Response::error($e->getMessage());
         }
 
-        return Response::success('ক্যাটাগরি আপডেট হয়েছে।', ['category' => Category::find($id)]);
+        return Response::success('Category updated.', ['category' => Category::find($id)]);
     }
 
     /** DELETE /api/v1/categories/{id} */
@@ -88,7 +88,33 @@ final class CategoryApi
         }
 
         return $done
-            ? Response::success('ক্যাটাগরি ডিলিট হয়েছে।')
-            : Response::error('ক্যাটাগরি পাওয়া যায়নি।');
+            ? Response::success('Category deleted.')
+            : Response::error('Category not found.');
+    }
+
+    /** POST /api/v1/categories/{id}/image — multipart, field image */
+    public static function uploadImage(): array
+    {
+        $file = Request::file('image');
+
+        if ($file === []) {
+            return Response::error('Please choose an image.');
+        }
+
+        try {
+            $path = CategoryService::uploadImage(Request::paramInt('id'), $file);
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage());
+        }
+
+        return Response::success('Image uploaded.', ['image' => $path]);
+    }
+
+    /** DELETE /api/v1/categories/{id}/image */
+    public static function removeImage(): array
+    {
+        CategoryService::removeImage(Request::paramInt('id'));
+
+        return Response::success('Image removed.');
     }
 }

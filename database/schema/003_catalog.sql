@@ -188,6 +188,8 @@ CREATE TABLE IF NOT EXISTS `products` (
 -- একটা নির্দিষ্ট কম্বিনেশন — যেমন "Navy / XL"।
 -- `signature` হলো attribute_value_id গুলো সাজিয়ে জোড়া দেওয়া স্ট্রিং ("3-11"),
 -- এতে একই কম্বিনেশন দুবার তৈরি হওয়া UNIQUE কি দিয়েই আটকানো যায়।
+-- sale_price ইচ্ছাকৃতভাবে এখানে নাই — বিক্রয়মূল্য সবসময় products.sale_price
+-- (এক প্রোডাক্টের সব রঙ/সাইজ এক দামে বিক্রি হয়; শুধু ক্রয়মূল্য/স্টক ভ্যারিয়েন্ট-ভিত্তিক)।
 CREATE TABLE IF NOT EXISTS `product_variants` (
   `id`              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id`      BIGINT UNSIGNED NOT NULL,
@@ -196,7 +198,6 @@ CREATE TABLE IF NOT EXISTS `product_variants` (
   `sku`             VARCHAR(80)     NOT NULL,
   `barcode`         VARCHAR(80)     NOT NULL DEFAULT '',
   `purchase_price`  DECIMAL(20,4)   NOT NULL DEFAULT 0.0000,
-  `sale_price`      DECIMAL(20,4)   NOT NULL DEFAULT 0.0000,
   `offer_price`     DECIMAL(20,4)   NOT NULL DEFAULT 0.0000,
   `stock`           DECIMAL(20,4)   NOT NULL DEFAULT 0.0000,
   `image`           VARCHAR(255)    NOT NULL DEFAULT '',
@@ -233,22 +234,27 @@ CREATE TABLE IF NOT EXISTS `product_variant_values` (
       REFERENCES `attribute_values` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- প্রোডাক্ট গ্যালারি। `variant_id > 0` হলে ছবিটা ওই ভ্যারিয়েন্টের (যেমন Navy রঙের ছবি)।
+-- প্রোডাক্ট গ্যালারি। ছবি ট্যাগ হয় `attribute_value_id` দিয়ে — 0 = সাধারণ ছবি,
+-- নাহলে নির্দিষ্ট Color ভ্যালুর ছবি (যেমন Navy) — তাই একই রঙের সব সাইজ একই
+-- ছবি শেয়ার করে (doc/09-media-and-purchase-pricing.md সিদ্ধান্ত M-01)।
+-- `variant_id` কলাম রাখা আছে কিন্তু আর ব্যবহার হয় না।
 CREATE TABLE IF NOT EXISTS `product_images` (
-  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `product_id`  BIGINT UNSIGNED NOT NULL,
-  `variant_id`  BIGINT UNSIGNED NOT NULL DEFAULT 0,
-  `path`        VARCHAR(255)    NOT NULL,
-  `alt`         VARCHAR(191)    NOT NULL DEFAULT '',
-  `is_primary`  TINYINT         NOT NULL DEFAULT 0,
-  `sort_order`  INT             NOT NULL DEFAULT 0,
-  `created_at`  INT UNSIGNED    NOT NULL DEFAULT 0,
-  `created_by`  BIGINT UNSIGNED NOT NULL DEFAULT 0,
-  `updated_at`  INT UNSIGNED    NOT NULL DEFAULT 0,
-  `updated_by`  BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `id`                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id`          BIGINT UNSIGNED NOT NULL,
+  `variant_id`          BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `attribute_value_id`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '0 = সাধারণ ছবি; নাহলে Color ভ্যালু',
+  `path`                VARCHAR(255)    NOT NULL,
+  `alt`                 VARCHAR(191)    NOT NULL DEFAULT '',
+  `is_primary`          TINYINT         NOT NULL DEFAULT 0,
+  `sort_order`          INT             NOT NULL DEFAULT 0,
+  `created_at`          INT UNSIGNED    NOT NULL DEFAULT 0,
+  `created_by`          BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `updated_at`          INT UNSIGNED    NOT NULL DEFAULT 0,
+  `updated_by`          BIGINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `ix_image_product` (`product_id`, `sort_order`),
   KEY `ix_image_variant` (`variant_id`),
+  KEY `ix_image_attr_value` (`attribute_value_id`),
   CONSTRAINT `fk_image_product` FOREIGN KEY (`product_id`)
       REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

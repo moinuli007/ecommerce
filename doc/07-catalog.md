@@ -113,7 +113,8 @@ UnitService::convert(1, $piece, $gram);    // ✗ আলাদা গ্রু�
 | | `has_variant = 0` | `has_variant = 1` |
 |---|---|---|
 | উদাহরণ | বেল্ট, মগ | শার্ট (M/L/XL × Navy/White) |
-| দাম কোথায় | `products` টেবিলে | প্রতি `product_variants` সারিতে |
+| `sale_price` কোথায় | `products` টেবিলে | **`products` টেবিলেই** — ভ্যারিয়েন্টে sale_price নাই, একই প্রোডাক্টের সব রঙ/সাইজ এক দামে বিক্রি হয় |
+| `purchase_price`/`offer_price` কোথায় | `products` টেবিলে | প্রতি `product_variants` সারিতে (রঙ/সাইজ ভেদে ক্রয়মূল্য আলাদা হতে পারে) |
 | স্টক কোথায় | `products.stock` | প্রতি ভ্যারিয়েন্টে; `products.stock` = যোগফল |
 
 `has_variant` হাতে সেট করতে হয় না — `syncVariants()` নিজে বসায়।
@@ -122,14 +123,20 @@ UnitService::convert(1, $piece, $gram);    // ✗ আলাদা গ্রু�
 > `StockService` এর ক্যাশড মান — সত্যের উৎস `stock_ledger`। বাড়ে শুধু **Purchase**
 > / **Stock Adjustment** থেকে, কমে **Sale** থেকে। প্রোডাক্ট ফর্মে স্টক read-only।
 > পূর্ণ বিবরণ [08-purchase.md](08-purchase.md)।
+>
+> **`purchase_price`-ও হাতে বসানো যায় না** — একই নিয়ম, একই কারণে। `CostService`
+> এটা লেখে (moving weighted-average, Purchase থেকে) — `products.purchase_price`
+> (সিম্পল প্রোডাক্ট) আর `product_variants.purchase_price` (ভ্যারিয়েন্ট) দুটোতেই।
+> প্রোডাক্ট ফর্মে (এবং ভ্যারিয়েন্ট গ্রিডে) তাই এটাও read-only দেখায় — নতুন
+> প্রোডাক্টে `0`, প্রথম Purchase-এর পর আসল দাম বসে (২০২৬-০৯-০৯ চূড়ান্ত সিদ্ধান্ত)।
 
 ### দাম
 
 | কলাম | মানে |
 |---|---|
-| `purchase_price` | moving weighted-average ক্রয়মূল্য (COGS হিসাবের ভিত্তি) — `CostService` বসায়, হাতে নয় |
-| `sale_price` | স্বাভাবিক বিক্রয় মূল্য (regular price) |
-| `offer_price` | অফার মূল্য; `0` = অফার নাই |
+| `purchase_price` | moving weighted-average ক্রয়মূল্য (COGS হিসাবের ভিত্তি) — **শুধু `CostService` লেখে, ফর্মে read-only**; ভ্যারিয়েন্ট থাকলে প্রতি ভ্যারিয়েন্টে আলাদা |
+| `sale_price` | স্বাভাবিক বিক্রয় মূল্য (regular price) — **শুধু `products` টেবিলে**, `product_variants` এ এই কলাম নাই। একই প্রোডাক্টের সব রঙ/সাইজ এক দামে বিক্রি হয় (সিদ্ধান্ত, ২০২৬-০৯-০৯) |
+| `offer_price` | অফার মূল্য; `0` = অফার নাই; ভ্যারিয়েন্টে আলাদা অফার দেওয়া যায় (যেমন নির্দিষ্ট রঙে ক্লিয়ারেন্স) |
 | `offer_start` / `offer_end` | `0` = সীমা নাই |
 
 **কার্যকর দাম সবসময় `ProductService::effectivePrice()` দিয়ে বের করবেন** —
@@ -146,7 +153,8 @@ ProductService::effectivePrice($product, $variant);
 নিয়ম: অফার তখনই চালু যখন `offer_price > 0`, `offer_price < regular`, এবং
 আজকের তারিখ সময়সীমার ভেতরে। `offer_end` **inclusive** — ওই দিনের শেষ সেকেন্ড পর্যন্ত।
 
-ভ্যারিয়েন্টে নিজের দাম থাকতে পারে; **অফারের সময়সীমা কেবল প্রোডাক্টে** থাকে।
+`sale_price` সবসময় প্রোডাক্টের — ভ্যারিয়েন্টে নিজস্ব `sale_price` নাই। ভ্যারিয়েন্টে
+শুধু `offer_price` আলাদা হতে পারে; **অফারের সময়সীমা কেবল প্রোডাক্টে** থাকে।
 
 ---
 
@@ -171,7 +179,9 @@ ProductService::syncVariants($productId, [
 | `signature` | ভ্যালু id গুলো সংখ্যাক্রমে সাজিয়ে — `"3-23"` |
 | `name` | অ্যাট্রিবিউটের ক্রমে ভ্যালু — `"M / Navy"` |
 | `sku` | প্রোডাক্টের SKU + ভ্যালু কোড — `"P-00001-M-NVY"` |
-| দাম | প্রোডাক্টের দাম কপি হয়ে আসে, পরে গ্রিডে বদলানো যায় |
+| `purchase_price` | প্রোডাক্টের (তখনকার) দাম কপি হয়ে আসে; এরপর শুধু `CostService`/Purchase বদলায়, গ্রিডে read-only |
+| `offer_price` | প্রোডাক্টের দাম কপি হয়ে আসে, পরে গ্রিডে আলাদা করে বদলানো যায় |
+| `sale_price` | **নাই** — বিক্রয় মূল্য সবসময় প্রোডাক্টের, ভ্যারিয়েন্টে কপি হয় না |
 
 ### আবার চালালে কী হয়
 
@@ -236,14 +246,15 @@ ProductService::syncVariants($productId, [
 | `PUT` | `/api/v1/products/{id}` | |
 | `DELETE` | `/api/v1/products/{id}` | |
 | `POST` | `/api/v1/products/{id}/variants` | `selection` — নিচে দেখুন |
-| `PUT` | `/api/v1/variants/{id}` | `purchase_price`, `sale_price`, `offer_price`, `stock`, `barcode?` |
-| `POST` | `/api/v1/products/{id}/images` | `path`, `alt?`, `variant_id?`, `is_primary?` |
+| `PUT` | `/api/v1/variants/{id}` | `offer_price`, `barcode?` (`purchase_price`/`sale_price` নাই — আগেরটা শুধু Purchase থেকে আসে, পরেরটা প্রোডাক্টের দাম কার্ড থেকে বদলান) |
+| `POST` | `/api/v1/products/{id}/images` | multipart — `image` (ফাইল), `attribute_value_id?` (রঙ, 0=সাধারণ), `alt?`, `is_primary?` — [09-media-and-purchase-pricing.md](09-media-and-purchase-pricing.md) |
+| `PUT` | `/api/v1/images/{id}` | `is_primary?`, `alt?`, `attribute_value_id?` (নতুন ফাইল না) |
 | `DELETE` | `/api/v1/images/{id}` | |
 
 **প্রোডাক্ট সেভের ফিল্ড:** `name`*, `category_id`*, `unit_id`*, `slug?`, `sku?`
 (খালি হলে `P-00001` সিরিজ), `short_description?`, `description?`,
-`purchase_price?`, `sale_price?`, `offer_price?`, `offer_start?`, `offer_end?`
-(`YYYY-MM-DD`), `stock?`, `stock_alert?`, `weight?` (গ্রাম), `isActive?`,
+`sale_price?`, `offer_price?`, `offer_start?`, `offer_end?`
+(`YYYY-MM-DD`), `stock_alert?`, `weight?` (গ্রাম), `isActive?`,
 `isNew?`, `isFeatured?`, `sort_order?`, `meta_title?`, `meta_description?`
 
 **ভ্যারিয়েন্ট জেনারেট:**
@@ -297,7 +308,9 @@ php database/install.php --demo
 ## ৯. ফেজ ৩-এ যা যুক্ত হবে
 
 - স্টোরফ্রন্ট পাবলিক এন্ডপয়েন্ট (`/collections/{slug}`, `/products/{slug}`)
-- ছবি আপলোড (এখন `path` স্ট্রিং নেওয়া হয়, ফাইল হ্যান্ডলিং নাই)
 - কার্ট ও চেকআউট — ভ্যারিয়েন্ট ধরে
 - অর্ডার পোস্ট হলে `Sale` + `CostOfGoodsSold` ভাউচার
   (ম্যাপিং [05-voucher.md](05-voucher.md) এ)
+
+> ছবি আপলোড (ক্যাটাগরি + প্রোডাক্ট গ্যালারি, রঙ-ভিত্তিক ট্যাগিং) ফেজ ৩ এর
+> অপেক্ষা না করে আগেই প্ল্যান করা হয়েছে — দেখুন [09-media-and-purchase-pricing.md](09-media-and-purchase-pricing.md)।
