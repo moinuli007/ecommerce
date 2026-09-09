@@ -262,12 +262,17 @@ Asset/Expense → Debit, Liability/Equity/Income → Credit।
 
 ## পরের ফেজে যে টেবিলগুলো আসবে
 
-ফেজ ৩ / ৫ এ যোগ হবে (এখনো বানানো হয়নি, শুধু পরিকল্পনা):
+ফেজ ৩ এ যোগ হবে (এখনো বানানো হয়নি, পূর্ণ পরিকল্পনা [10-storefront-order.md](10-storefront-order.md)):
 
 ```
-customers, addresses, carts, cart_items
-orders, order_items, order_status_log, shipments, couriers
-payments, payment_gateways, refunds, returns
+delivery_zones, customers, carts, cart_items
+orders, order_items, order_status_log, order_payments
+```
+
+ফেজ ৫ এ (গেটওয়ে, কুরিয়ার সেটেলমেন্ট, রিটার্ন/রিফান্ড আলাদা ফর্ম):
+
+```
+shipments, couriers, payment_gateways, refunds, returns
 ```
 
 `orders`, `purchases` ইত্যাদির সাথে হিসাবের যোগসূত্র `a_voucher_entry.reference` —
