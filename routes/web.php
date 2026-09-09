@@ -17,7 +17,6 @@
 
 use App\Core\Env;
 use App\Core\Router;
-
 Router::get('/', static function (): string {
     $appUrl = rtrim((string) Env::get('APP_URL', ''), '/');
 

@@ -15,6 +15,9 @@ use App\Modules\Auth\Controllers\LoginController;
 use App\Modules\Auth\Controllers\ProfileController;
 use App\Modules\Catalog\Controllers\CatalogController;
 use App\Modules\Dashboard\Controllers\DashboardController;
+use App\Modules\Purchase\Controllers\PurchaseController;
+use App\Modules\Purchase\Controllers\StockController;
+use App\Modules\Purchase\Controllers\SupplierController;
 
 // লগইন (গেস্ট)
 Router::get('/admin/login',   [LoginController::class, 'form'],   ['name' => 'admin.login']);
@@ -37,6 +40,25 @@ Router::group(['prefix' => '/admin', 'guard' => 'admin'], function (): void {
     Router::get('/products',            [CatalogController::class, 'products'],      ['name' => 'admin.product.index']);
     Router::get('/products/create',     [CatalogController::class, 'productCreate'], ['name' => 'admin.product.create']);
     Router::get('/products/{id}/edit',  [CatalogController::class, 'productEdit'],   ['name' => 'admin.product.edit']);
+
+    // ---------------------------------------------------------------------
+    // ক্রয় — স্থির পাথ আগে, {id} পরে
+    // ---------------------------------------------------------------------
+    Router::get('/suppliers',           [SupplierController::class, 'index'],  ['name' => 'admin.supplier.index']);
+    Router::get('/suppliers/create',    [SupplierController::class, 'create'], ['name' => 'admin.supplier.create']);
+    Router::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'],   ['name' => 'admin.supplier.edit']);
+
+    Router::get('/purchases',           [PurchaseController::class, 'index'],  ['name' => 'admin.purchase.index']);
+    Router::get('/purchases/create',    [PurchaseController::class, 'create'], ['name' => 'admin.purchase.create']);
+    Router::get('/purchases/{id}',      [PurchaseController::class, 'show'],   ['name' => 'admin.purchase.show']);
+    Router::get('/purchases/{id}/edit', [PurchaseController::class, 'edit'],   ['name' => 'admin.purchase.edit']);
+
+    // স্টক সমন্বয় ও ক্রয় ফেরত — স্থির পাথ আগে
+    Router::get('/stock/adjustments',           [StockController::class, 'adjustments'],      ['name' => 'admin.stock.adjustment.index']);
+    Router::get('/stock/adjustments/create',    [StockController::class, 'adjustmentCreate'], ['name' => 'admin.stock.adjustment.create']);
+    Router::get('/stock/adjustments/{id}/edit', [StockController::class, 'adjustmentEdit'],   ['name' => 'admin.stock.adjustment.edit']);
+    Router::get('/stock/returns',               [StockController::class, 'returns'],          ['name' => 'admin.stock.return.index']);
+    Router::get('/stock/returns/create',        [StockController::class, 'returnCreate'],     ['name' => 'admin.stock.return.create']);
 
     // ভাউচার
     Router::get('/vouchers',            [VoucherController::class, 'index'], ['name' => 'admin.voucher.index']);

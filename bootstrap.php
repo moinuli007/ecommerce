@@ -10,7 +10,6 @@ use App\Core\DB;
 use App\Core\Env;
 use App\Core\Router;
 use App\Core\View;
-
 define('BASE_PATH', __DIR__);
 
 require_once __DIR__ . '/app/Core/Autoloader.php';

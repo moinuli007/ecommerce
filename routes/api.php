@@ -19,6 +19,9 @@ use App\Modules\Catalog\Api\CategoryApi;
 use App\Modules\Catalog\Api\ProductApi;
 use App\Modules\Catalog\Api\UnitApi;
 use App\Modules\Dashboard\Api\DashboardApi;
+use App\Modules\Purchase\Api\PurchaseApi;
+use App\Modules\Purchase\Api\StockApi;
+use App\Modules\Purchase\Api\SupplierApi;
 
 Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
 
@@ -87,6 +90,35 @@ Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
         Router::delete('/attributes/{id}',      [AttributeApi::class, 'destroy'],      ['name' => 'api.attribute.destroy']);
         Router::post('/attribute-values',       [AttributeApi::class, 'storeValue'],   ['name' => 'api.attributeValue.store']);
         Router::delete('/attribute-values/{id}', [AttributeApi::class, 'destroyValue'], ['name' => 'api.attributeValue.destroy']);
+
+        // =================================================================
+        //  ক্রয় — সাপ্লায়ার
+        // =================================================================
+        Router::get('/suppliers',         [SupplierApi::class, 'index'],   ['name' => 'api.supplier.index']);
+        Router::get('/suppliers/{id}',    [SupplierApi::class, 'show'],    ['name' => 'api.supplier.show']);
+        Router::post('/suppliers',        [SupplierApi::class, 'store'],   ['name' => 'api.supplier.store']);
+        Router::put('/suppliers/{id}',    [SupplierApi::class, 'update'],  ['name' => 'api.supplier.update']);
+        Router::delete('/suppliers/{id}', [SupplierApi::class, 'destroy'], ['name' => 'api.supplier.destroy']);
+
+        // ক্রয় — স্থির পাথ আগে, {id} পরে
+        Router::get('/purchases',            [PurchaseApi::class, 'index'],    ['name' => 'api.purchase.index']);
+        Router::get('/purchases/form-data',  [PurchaseApi::class, 'formData'], ['name' => 'api.purchase.form']);
+        Router::get('/purchases/{id}',       [PurchaseApi::class, 'show'],     ['name' => 'api.purchase.show']);
+        Router::post('/purchases',           [PurchaseApi::class, 'store'],    ['name' => 'api.purchase.store']);
+        Router::put('/purchases/{id}',       [PurchaseApi::class, 'update'],   ['name' => 'api.purchase.update']);
+        Router::delete('/purchases/{id}',    [PurchaseApi::class, 'destroy'],  ['name' => 'api.purchase.destroy']);
+
+        // স্টক — খতিয়ান, সমন্বয়, ক্রয় ফেরত
+        Router::get('/stock/ledger',              [StockApi::class, 'ledger'],            ['name' => 'api.stock.ledger']);
+        Router::get('/stock/adjustments',         [StockApi::class, 'adjustments'],       ['name' => 'api.stock.adjustment.index']);
+        Router::get('/stock/adjustments/{id}',    [StockApi::class, 'showAdjustment'],    ['name' => 'api.stock.adjustment.show']);
+        Router::post('/stock/adjustments',        [StockApi::class, 'storeAdjustment'],   ['name' => 'api.stock.adjustment.store']);
+        Router::put('/stock/adjustments/{id}',    [StockApi::class, 'updateAdjustment'],  ['name' => 'api.stock.adjustment.update']);
+        Router::delete('/stock/adjustments/{id}', [StockApi::class, 'destroyAdjustment'], ['name' => 'api.stock.adjustment.destroy']);
+        Router::get('/stock/returns',             [StockApi::class, 'returns'],           ['name' => 'api.stock.return.index']);
+        Router::get('/stock/returns/{id}',        [StockApi::class, 'showReturn'],        ['name' => 'api.stock.return.show']);
+        Router::post('/stock/returns',            [StockApi::class, 'storeReturn'],       ['name' => 'api.stock.return.store']);
+        Router::delete('/stock/returns/{id}',     [StockApi::class, 'destroyReturn'],     ['name' => 'api.stock.return.destroy']);
 
         // প্রোডাক্ট — স্থির পাথ আগে, {id} পরে
         Router::get('/products',                 [ProductApi::class, 'index'],        ['name' => 'api.product.index']);

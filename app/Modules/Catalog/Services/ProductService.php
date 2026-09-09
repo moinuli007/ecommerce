@@ -20,8 +20,12 @@ use RuntimeException;
  * প্রোডাক্ট — ক্যাটালগের কেন্দ্র।
  *
  * দুই ধরনের প্রোডাক্ট:
- *   has_variant = 0 → দাম ও স্টক `products` টেবিলেই (একটা বেল্ট, একটা মগ)
- *   has_variant = 1 → দাম ও স্টক প্রতি ভ্যারিয়েন্টে (শার্ট: Navy/M, Navy/L, White/XL …)
+ *   has_variant = 0 → দাম `products` টেবিলেই (একটা বেল্ট, একটা মগ)
+ *   has_variant = 1 → দাম প্রতি ভ্যারিয়েন্টে (শার্ট: Navy/M, Navy/L, White/XL …)
+ *
+ * স্টক (`products.stock` / `product_variants.stock`) হাতে বসানো হয় না — এটা
+ * StockService এর ক্যাশড মান, আসে Purchase / Stock Adjustment থেকে
+ * (doc/08-purchase.md §৯)।
  *
  * ভ্যারিয়েন্ট হাতে বানাতে হয় না — অ্যাট্রিবিউট ভ্যালু বেছে দিলে
  * syncVariants() সব কম্বিনেশন (cartesian product) নিজে তৈরি করে দেয়।
@@ -96,13 +100,8 @@ final class ProductService
             'meta_description'  => mb_substr((string) ($data['meta_description'] ?? ''), 0, 300),
         ];
 
-        // ভ্যারিয়েন্টহীন প্রোডাক্টের স্টক সরাসরি এখানে; ভ্যারিয়েন্ট থাকলে
-        // syncVariants() যোগফল বসাবে, তাই এখানে ছোঁয়া হয় না।
-        $existing = $id > 0 ? Product::find($id) : [];
-
-        if ($existing === [] || (int) $existing['has_variant'] === 0) {
-            $row['stock'] = (float) ($data['stock'] ?? ($existing['stock'] ?? 0));
-        }
+        // স্টক এখানে বসে না — Purchase / Stock Adjustment থেকে StockService বসায়
+        // (doc/08-purchase.md §9)। নতুন প্রোডাক্টে DB ডিফল্ট 0.0000।
 
         return DB::transaction(static function () use ($row, $data, $id, $name): int {
             if ($id > 0) {
@@ -260,12 +259,13 @@ final class ProductService
 
         $row = [];
 
-        foreach (['purchase_price', 'sale_price', 'offer_price', 'stock'] as $field) {
+        // স্টক এখানে বদলায় না — StockService এর দায়িত্ব (doc/08-purchase.md §৯)
+        foreach (['purchase_price', 'sale_price', 'offer_price'] as $field) {
             if (array_key_exists($field, $data)) {
                 $value = (float) $data[$field];
 
                 if ($value < 0) {
-                    throw new RuntimeException('দাম বা স্টক ঋণাত্মক হতে পারবে না।');
+                    throw new RuntimeException('দাম ঋণাত্মক হতে পারবে না।');
                 }
 
                 $row[$field] = $value;

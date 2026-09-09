@@ -241,16 +241,34 @@ Asset/Expense → Debit, Liability/Equity/Income → Credit।
 
 ---
 
+## ৪. ক্রয় ও স্টক টেবিল (ফেজ ৪)
+
+`database/schema/004_purchase.sql` — ৯টি টেবিল। পূর্ণ ব্যাখ্যা [08-purchase.md](08-purchase.md) এ।
+
+| টেবিল | কী রাখে | মনে রাখার মতো |
+|---|---|---|
+| `suppliers` | সাপ্লায়ার | `ledger_id` = Accounts Payable লেজারের ক্যাশ (lazy) |
+| `purchases` / `purchase_items` | ক্রয়ের হেডার / লাইন | `total = sub_total − discount` (VAT/AIT নাই) |
+| `stock_ledger` | **স্টকের সত্যের উৎস** | `qty` সাইনড, বেস ইউনিটে; append-only |
+| `stock_adjustments` / `_items` | ওপেনিং / নষ্ট / গণনা | `qty` সাইনড; reason ১=Opening ২=Damage ৩=Count |
+| `purchase_returns` / `_items` | ক্রয় ফেরত | `purchase_id` রেফার করে |
+| `product_price_log` | weighted-avg cost বদলের ইতিহাস | append-only |
+
+`products.stock` / `product_variants.stock` হাতে বসে না — `StockService` এর
+ক্যাশড মান, `stock_ledger` থেকে হিসাব। `purchase_price` = moving weighted-average,
+`CostService` বসায়।
+
+---
+
 ## পরের ফেজে যে টেবিলগুলো আসবে
 
-ফেজ ৩–৫ এ যোগ হবে (এখনো বানানো হয়নি, শুধু পরিকল্পনা):
+ফেজ ৩ / ৫ এ যোগ হবে (এখনো বানানো হয়নি, শুধু পরিকল্পনা):
 
 ```
 customers, addresses, carts, cart_items
 orders, order_items, order_status_log, shipments, couriers
-suppliers, purchases, purchase_items, stock_ledger, stock_adjustments
 payments, payment_gateways, refunds, returns
 ```
 
-`orders`, `purchases` ইত্যাদির সাথে হিসাবের যোগসূত্র হবে `a_voucher_entry.reference` —
+`orders`, `purchases` ইত্যাদির সাথে হিসাবের যোগসূত্র `a_voucher_entry.reference` —
 আলাদা কোনো FK নয়, কারণ এক অর্ডার থেকে একাধিক ভাউচার (Sale, COGS, Shipping) তৈরি হয়।

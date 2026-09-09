@@ -37,6 +37,16 @@ final class Menu
                 ],
             ],
             [
+                'title' => 'ক্রয়',
+                'icon'  => 'trend-down',
+                'items' => [
+                    ['label' => 'ক্রয় এন্ট্রি',  'path' => '/admin/purchases',          'icon' => 'in', 'match' => 'exact'],
+                    ['label' => 'ক্রয় ফেরত',    'path' => '/admin/stock/returns',      'icon' => 'out'],
+                    ['label' => 'স্টক সমন্বয়',  'path' => '/admin/stock/adjustments',  'icon' => 'sliders'],
+                    ['label' => 'সাপ্লায়ার',    'path' => '/admin/suppliers',          'icon' => 'user'],
+                ],
+            ],
+            [
                 'title' => 'হিসাব',
                 'icon'  => 'book',
                 'items' => [

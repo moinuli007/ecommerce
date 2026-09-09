@@ -196,8 +196,9 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
                                                    value="<?= $variant['sale_price'] ?>"></td>
                                         <td><input name="offer_price" type="number" step="0.01" min="0"
                                                    value="<?= $variant['offer_price'] ?>"></td>
-                                        <td><input name="stock" type="number" step="0.01" min="0"
-                                                   value="<?= $variant['stock'] ?>"></td>
+                                        <td class="num" title="Set via Purchase / Stock Adjustment"><?=
+                                            rtrim(rtrim(number_format((float) $variant['stock'], 4), '0'), '.') ?: '0'
+                                        ?></td>
                                         <td><?= $variant['isActive'] ? 'চালু' : '<span class="muted">নিষ্ক্রিয়</span>' ?></td>
                                         <td><button type="button" class="ghost" data-save-variant>সেভ</button></td>
                                     </tr>
@@ -245,18 +246,17 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
             <div class="card">
                 <h2 class="card-title">স্টক ও শিপিং</h2>
 
-                <?php if (!$isEdit || !$v('has_variant', false)): ?>
-                    <div class="field">
-                        <label for="stock">স্টক</label>
-                        <input id="stock" name="stock" type="number" step="0.01" min="0"
-                               value="<?= (float) $v('stock', 0) ?>">
-                    </div>
-                <?php else: ?>
+                <div class="field">
+                    <label>স্টক <span class="muted">(Purchase / Stock Adjustment থেকে)</span></label>
                     <p class="notice" style="margin-top:0">
-                        ভ্যারিয়েন্ট আছে — মোট স্টক ভ্যারিয়েন্টের যোগফল
-                        (<strong><?= rtrim(rtrim(number_format((float) $v('stock', 0), 2), '0'), '.') ?></strong>)।
+                        <strong><?= rtrim(rtrim(number_format((float) $v('stock', 0), 4), '0'), '.') ?: '0' ?></strong>
+                        <?php if (!$isEdit): ?>
+                            — সেভ করার পর Purchase এন্ট্রি দিয়ে স্টক বাড়বে।
+                        <?php elseif ($v('has_variant', false)): ?>
+                            — ভ্যারিয়েন্টের যোগফল।
+                        <?php endif; ?>
                     </p>
-                <?php endif; ?>
+                </div>
 
                 <div class="field">
                     <label for="stock_alert">স্টক অ্যালার্ট</label>
@@ -314,7 +314,6 @@ $v         = static fn (string $key, mixed $default = '') => $product[$key] ?? $
             offer_price:       parseFloat(val('offer_price')) || 0,
             offer_start:       val('offer_start'),
             offer_end:         val('offer_end'),
-            stock:             parseFloat(val('stock')) || 0,
             stock_alert:       parseFloat(val('stock_alert')) || 0,
             weight:            parseFloat(val('weight')) || 0,
             sort_order:        parseInt(val('sort_order'), 10) || 0,

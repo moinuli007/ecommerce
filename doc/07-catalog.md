@@ -81,8 +81,8 @@ UnitService::fromBase(24, $dozen);         // 2
 UnitService::convert(1, $piece, $gram);    // ✗ আলাদা গ্রুপ — exception
 ```
 
-> **স্টক সবসময় বেস ইউনিটে জমা হয়।** ফেজ ৪-এ ক্রয়/বিক্রয়ে অন্য ইউনিট ব্যবহার
-> করলে `toBase()` দিয়ে রূপান্তর করে তবেই স্টকে বসবে।
+> **স্টক সবসময় বেস ইউনিটে জমা হয়।** ক্রয়/সমন্বয়ে অন্য ইউনিট দিলে `toBase()`
+> দিয়ে রূপান্তর করে তবেই স্টকে বসে।
 
 ---
 
@@ -118,11 +118,16 @@ UnitService::convert(1, $piece, $gram);    // ✗ আলাদা গ্রু�
 
 `has_variant` হাতে সেট করতে হয় না — `syncVariants()` নিজে বসায়।
 
+> **স্টক হাতে বসানো যায় না।** `products.stock` / `product_variants.stock` হলো
+> `StockService` এর ক্যাশড মান — সত্যের উৎস `stock_ledger`। বাড়ে শুধু **Purchase**
+> / **Stock Adjustment** থেকে, কমে **Sale** থেকে। প্রোডাক্ট ফর্মে স্টক read-only।
+> পূর্ণ বিবরণ [08-purchase.md](08-purchase.md)।
+
 ### দাম
 
 | কলাম | মানে |
 |---|---|
-| `purchase_price` | ক্রয় মূল্য (COGS হিসাবের ভিত্তি) |
+| `purchase_price` | moving weighted-average ক্রয়মূল্য (COGS হিসাবের ভিত্তি) — `CostService` বসায়, হাতে নয় |
 | `sale_price` | স্বাভাবিক বিক্রয় মূল্য (regular price) |
 | `offer_price` | অফার মূল্য; `0` = অফার নাই |
 | `offer_start` / `offer_end` | `0` = সীমা নাই |
