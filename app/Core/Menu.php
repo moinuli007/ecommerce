@@ -47,6 +47,16 @@ final class Menu
                 ],
             ],
             [
+                'title' => 'Sale',
+                'icon'  => 'truck',
+                'items' => [
+                    ['label' => 'Pending Orders', 'path' => '/admin/orders/pending', 'icon' => 'alert', 'match' => 'exact'],
+                    ['label' => 'Orders',         'path' => '/admin/orders',         'icon' => 'list'],
+                    ['label' => 'Customers',      'path' => '/admin/customers',      'icon' => 'user'],
+                    ['label' => 'Delivery Zones', 'path' => '/admin/delivery-zones', 'icon' => 'truck'],
+                ],
+            ],
+            [
                 'title' => 'Accounts',
                 'icon'  => 'book',
                 'items' => [
@@ -162,6 +172,7 @@ final class Menu
             'folder'    => '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
             'sliders'   => '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
             'ruler'     => '<path d="M16 2 22 8 8 22 2 16z"/><line x1="7" y1="11" x2="9" y2="13"/><line x1="10" y1="8" x2="12" y2="10"/><line x1="13" y1="5" x2="15" y2="7"/>',
+            'truck'     => '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
             'chevron'   => '<polyline points="6 9 12 15 18 9"/>',
             'menu'      => '<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
             'check'     => '<polyline points="20 6 9 17 4 12"/>',

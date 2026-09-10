@@ -260,16 +260,28 @@ Asset/Expense → Debit, Liability/Equity/Income → Credit।
 
 ---
 
-## পরের ফেজে যে টেবিলগুলো আসবে
+## ৫. স্টোরফ্রন্ট ও অর্ডার টেবিল (ফেজ ৩)
 
-ফেজ ৩ এ যোগ হবে (এখনো বানানো হয়নি, পূর্ণ পরিকল্পনা [10-storefront-order.md](10-storefront-order.md)):
+`database/schema/005_order.sql` — ৮টি টেবিল। পূর্ণ ব্যাখ্যা [10-storefront-order.md](10-storefront-order.md) এ।
 
-```
-delivery_zones, customers, carts, cart_items
-orders, order_items, order_status_log, order_payments
-```
+| টেবিল | কী রাখে | মনে রাখার মতো |
+|---|---|---|
+| `delivery_zones` | ঢাকার ভিতরে/বাইরে | ডেটা-চালিত — নতুন জোন অ্যাডমিন থেকেই যোগ হয় |
+| `customers` | কাস্টমার | `phone` দিয়ে গেস্ট-ডিডুপ; `ledger_id` = Accounts Receivable লেজারের ক্যাশ (lazy, suppliers এর একই প্যাটার্ন) |
+| `carts` / `cart_items` | গেস্ট কার্ট | `token` (কুকি) দিয়ে চেনা; দাম এখানে জমা থাকে **না** — সবসময় লাইভ `effectivePrice()` |
+| `orders` | অর্ডার হেডার | `status` = `OrderStatus`; ঠিকানা/দাম/জোন-নাম সব checkout-মুহূর্তের স্ন্যাপশট |
+| `order_items` | অর্ডার লাইন | প্রোডাক্ট নাম/দাম/cost স্ন্যাপশট — audit কলাম নাই (`purchase_items` এর একই প্যাটার্ন, অপরিবর্তনীয় লাইন) |
+| `order_status_log` | স্ট্যাটাস অডিট ট্রেইল | append-only — `created_at`/`created_by` আছে, `updated_at`/`by` নাই (`stock_ledger` এর প্যাটার্ন) |
+| `order_payments` | ম্যানুয়াল bKash/Nagad রেফারেন্স | `status` = `PaymentStatus`; verify হলে `CustomerReceive` ভাউচার পোস্ট হয় |
 
-ফেজ ৫ এ (গেটওয়ে, কুরিয়ার সেটেলমেন্ট, রিটার্ন/রিফান্ড আলাদা ফর্ম):
+⚠ **audit কলামের নিয়ম** — এই ফেজে একটা ভুল থেকে শেখা: `Model::create()`/`updateById()`
+সবসময় চারটা কলামই (`created_at/by`, `updated_at/by`) স্ট্যাম্প করতে চায়। যে টেবিল
+সত্যিই বদলাতে পারে (এখানে `carts`, `cart_items`, `order_payments`) তার চারটাই লাগবে;
+যেটা শুধু append-only লগ/স্ন্যাপশট (`order_items`, `order_status_log`) সেখানে
+`Model::create()` না, সরাসরি `DB::insert()` ব্যবহার করতে হবে — নাহলে "Unknown column"
+এরর।
+
+ফেজ ৫ এ যোগ হবে (গেটওয়ে, কুরিয়ার সেটেলমেন্ট, রিটার্ন/রিফান্ড আলাদা ফর্ম):
 
 ```
 shipments, couriers, payment_gateways, refunds, returns

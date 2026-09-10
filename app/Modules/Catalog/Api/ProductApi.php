@@ -6,6 +6,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Upload;
 use App\Core\Validator;
+use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\Unit;
 use App\Modules\Catalog\Services\AttributeService;
@@ -234,5 +235,156 @@ final class ProductApi
         return ProductService::deleteImage(Request::paramInt('id'))
             ? Response::success('Image removed.')
             : Response::error('Image not found.');
+    }
+
+    // -------------------------------------------------------------------------
+    // স্টোরফ্রন্ট (guard: guest) — doc/10-storefront-order.md §৬
+    // -------------------------------------------------------------------------
+
+    /**
+     * GET /api/v1/storefront/products
+     * ফিল্টার: category (স্লাগ), q, sort (newest|price_asc|price_desc), isFeatured, isNew, on_sale, page, per_page
+     */
+    public static function publicIndex(): array
+    {
+        return self::publicListResponse([
+            'category'   => Request::string('category'),
+            'q'          => Request::string('q'),
+            'isFeatured' => Request::has('isFeatured') ? Request::int('isFeatured') : '',
+            'isNew'      => Request::has('isNew') ? Request::int('isNew') : '',
+            'on_sale'    => Request::int('on_sale'),
+            'sort'       => Request::string('sort'),
+            'page'       => Request::int('page', 1),
+            'per_page'   => Request::int('per_page', 24),
+        ]);
+    }
+
+    /**
+     * `publicIndex()` এর মূল কাজ, কিন্তু `$_GET`/`Request` না ছুঁয়ে সরাসরি
+     * ফিল্টার আর্গুমেন্ট নেয় — `Request::all()` এক রিকোয়েস্টে একবারই ক্যাশ হয়
+     * (doc/03-response-format.md), তাই হোমপেজের একাধিক সেকশন (New Arrivals,
+     * Bestsellers) আলাদা ফিল্টারে একই রিকোয়েস্টে একাধিকবার কল করতে হলে
+     * Request পড়া যাবে না — StorefrontController তাই এটা সরাসরি কল করে।
+     *
+     * @param  array<string,mixed> $filters category (স্লাগ), q?, isFeatured?, isNew?, on_sale?, sort?, page?, per_page?
+     * @return array{status:int,m:array<int,mixed>,products:array<int,mixed>,pagination:array<string,mixed>}
+     */
+    public static function publicListResponse(array $filters): array
+    {
+        $categoryId   = 0;
+        $categorySlug = (string) ($filters['category'] ?? '');
+
+        if ($categorySlug !== '') {
+            $category   = Category::bySlug($categorySlug);
+            $categoryId = (int) ($category['id'] ?? 0);
+
+            // অচেনা স্লাগ — খালি রেজাল্ট, এরর না (ভুল URL এ ৪০৪-এর মতো ভাঙা পেজ না দেখিয়ে)
+            if ($categoryId === 0) {
+                Response::ok();
+                Response::set('products', []);
+                Response::set('pagination', ['total' => 0, 'page' => 1, 'per_page' => 0, 'pages' => 1]);
+
+                return Response::payload();
+            }
+        }
+
+        $result = ProductService::search([
+            'category_id' => $categoryId,
+            'q'           => $filters['q'] ?? '',
+            'isActive'    => 1, // পাবলিকে সবসময় সক্রিয় প্রোডাক্টই — ক্লায়েন্ট এই ফিল্টার বদলাতে পারবে না
+            'isFeatured'  => $filters['isFeatured'] ?? '',
+            'isNew'       => $filters['isNew'] ?? '',
+            'on_sale'     => $filters['on_sale'] ?? 0,
+            'sort'        => $filters['sort'] ?? '',
+            'page'        => $filters['page'] ?? 1,
+            'per_page'    => $filters['per_page'] ?? 24,
+        ]);
+
+        Response::ok();
+        Response::set('products', array_map([self::class, 'publicProductRow'], $result['data']));
+        Response::set('pagination', [
+            'total'    => $result['total'],
+            'page'     => $result['page'],
+            'per_page' => $result['per_page'],
+            'pages'    => $result['per_page'] > 0 ? (int) ceil($result['total'] / $result['per_page']) : 1,
+        ]);
+
+        return Response::payload();
+    }
+
+    /**
+     * হোমপেজের "New Arrivals"/"Bestsellers" এর মতো সেকশনের জন্য — শুধু
+     * প্রোডাক্ট লিস্ট (pagination মেটা ছাড়া), সরাসরি ফিল্টার আর্গুমেন্ট নেয়।
+     *
+     * @param  array<string,mixed> $filters publicListResponse() এর একই ফিল্টার
+     * @return array<int,array<string,mixed>>
+     */
+    public static function section(array $filters): array
+    {
+        Response::reset();
+
+        return self::publicListResponse($filters)['products'] ?? [];
+    }
+
+    /** GET /api/v1/storefront/products/{slug} */
+    public static function publicShowBySlug(): array
+    {
+        $product = ProductService::detailsBySlug((string) Request::param('slug', ''));
+
+        if ($product === [] || (int) ($product['isActive'] ?? 0) !== 1) {
+            return Response::error('Product not found.');
+        }
+
+        return Response::success('', ['product' => self::publicProductDetail($product)]);
+    }
+
+    /**
+     * লিস্ট কার্ডের জন্য — `purchase_price` বাদ, exact `stock` এর বদলে বুলিয়ান `in_stock`।
+     *
+     * @param  array<string,mixed> $row
+     * @return array<string,mixed>
+     */
+    private static function publicProductRow(array $row): array
+    {
+        return [
+            'id'               => $row['id'],
+            'name'             => $row['name'],
+            'slug'             => $row['slug'],
+            'category_name'    => $row['category_name'],
+            'image'            => $row['image'],
+            'price'            => $row['price'],
+            'regular_price'    => $row['regular_price'],
+            'on_offer'         => $row['on_offer'],
+            'discount_percent' => $row['discount_percent'],
+            'in_stock'         => (float) $row['stock'] > 0,
+            'has_variant'      => $row['has_variant'],
+            'isFeatured'       => (bool) $row['isFeatured'],
+            'isNew'            => (bool) $row['isNew'],
+        ];
+    }
+
+    /**
+     * PDP এর জন্য — `purchase_price`/`stock_alert` বাদ, প্রোডাক্ট ও প্রতিটা
+     * ভ্যারিয়েন্টের exact stock এর বদলে বুলিয়ান `in_stock`।
+     *
+     * @param  array<string,mixed> $product
+     * @return array<string,mixed>
+     */
+    private static function publicProductDetail(array $product): array
+    {
+        $out = $product;
+        unset($out['purchase_price'], $out['stock_alert']);
+        $out['in_stock'] = (float) $product['stock'] > 0;
+        unset($out['stock']);
+
+        $out['variants'] = array_map(static function (array $variant): array {
+            unset($variant['purchase_price']);
+            $variant['in_stock'] = (float) $variant['stock'] > 0;
+            unset($variant['stock']);
+
+            return $variant;
+        }, $product['variants'] ?? []);
+
+        return $out;
     }
 }

@@ -206,8 +206,9 @@ LedgerStatement::trialBalance('2026-07-01', '2026-07-31');
 
 ## ৪. প্রতিটি লেনদেনের ডেবিট/ক্রেডিট ম্যাপ
 
-ফেজ ৩–৫ এ অর্ডার/পারচেজ মডিউল লেখার সময় এই ম্যাপ অনুযায়ীই ভাউচার পোস্ট হবে।
-`AutoLedger::X` মানে `LedgerAccounts::systemLedger(AutoLedger::X)`।
+ক্রয় (ফেজ ৪, [08-purchase.md](08-purchase.md)) আর বিক্রয়/অর্ডার
+(ফেজ ৩, [10-storefront-order.md](10-storefront-order.md)) দুটোই এই ম্যাপ
+অনুযায়ী ✅ বাস্তবায়িত। `AutoLedger::X` মানে `LedgerAccounts::systemLedger(AutoLedger::X)`।
 
 ### বিক্রয়
 
@@ -217,6 +218,15 @@ LedgerStatement::trialBalance('2026-07-01', '2026-07-31');
 | ক্যাশে বিক্রি | `Sale` | `Cash` | `Sales` |
 | COD অর্ডার (কুরিয়ারে দেওয়া) | `Sale` | `CodReceivable` | `Sales` |
 | শিপিং চার্জ নেওয়া | `ShippingCharge` | কাস্টমার / `CodReceivable` | `ShippingIncome` |
+
+> ⚠ **যেভাবে আসলে বাস্তবায়িত হয়েছে:** এই টেবিলে "শিপিং চার্জ নেওয়া" আলাদা
+> `ShippingCharge` টাইপ দেখাচ্ছে, কিন্তু `OrderService::postShipmentVouchers()`
+> এ শিপিং লাইনটা **আলাদা ভাউচার না** — একই কম্পাউন্ড `Sale` ভাউচারের তৃতীয়
+> লাইন (Dr CodReceivable/AdvanceFromCustomer পুরো grand_total, Cr Sales আর
+> Cr ShippingIncome একসাথে)। একই অর্ডারের বিক্রি আর শিপিং সবসময় একসাথে ঘটে
+> (checkout-এর দাম দুটোই এক জায়গা থেকে), আলাদা ভাউচার করলে অহেতুক জটিলতা —
+> `VoucherType::ShippingCharge` (type 12) তাই এখনো অব্যবহৃত। বিস্তারিত
+> [10-storefront-order.md](10-storefront-order.md) §৮।
 | ডিসকাউন্ট | `SaleDiscount` | `SalesDiscount` | কাস্টমার লেজার |
 | বিক্রির খরচ (স্টক কমা) | `CostOfGoodsSold` | `CostOfGoodsSold` | `Inventory` |
 | কাস্টমারের টাকা পাওয়া (ক্যাশ) | `CustomerReceive` | `Cash` | কাস্টমার লেজার |

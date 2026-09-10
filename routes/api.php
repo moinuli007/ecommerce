@@ -22,6 +22,12 @@ use App\Modules\Dashboard\Api\DashboardApi;
 use App\Modules\Purchase\Api\PurchaseApi;
 use App\Modules\Purchase\Api\StockApi;
 use App\Modules\Purchase\Api\SupplierApi;
+use App\Modules\Sale\Api\CartApi;
+use App\Modules\Sale\Api\CheckoutApi;
+use App\Modules\Sale\Api\CustomerApi;
+use App\Modules\Sale\Api\DeliveryZoneApi;
+use App\Modules\Sale\Api\OrderApi;
+use App\Modules\Sale\Api\PaymentApi;
 
 Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
 
@@ -31,6 +37,30 @@ Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
     Router::post('/auth/login',  [AuthApi::class, 'login'],  ['name' => 'api.auth.login']);
     Router::post('/auth/logout', [AuthApi::class, 'logout'], ['guard' => 'auth', 'name' => 'api.auth.logout']);
     Router::get('/auth/me',      [AuthApi::class, 'me'],     ['guard' => 'auth', 'name' => 'api.auth.me']);
+
+    // ---------------------------------------------------------------------
+    // স্টোরফ্রন্ট — ক্যাটালগ ব্রাউজিং (guard: guest, doc/10-storefront-order.md §৬)
+    // ---------------------------------------------------------------------
+    Router::get('/storefront/categories',            [CategoryApi::class, 'publicTree'],       ['name' => 'api.storefront.category.index']);
+    Router::get('/storefront/categories/{slug}',      [CategoryApi::class, 'publicShow'],       ['name' => 'api.storefront.category.show']);
+    Router::get('/storefront/products',               [ProductApi::class, 'publicIndex'],       ['name' => 'api.storefront.product.index']);
+    Router::get('/storefront/products/{slug}',        [ProductApi::class, 'publicShowBySlug'],  ['name' => 'api.storefront.product.show']);
+    Router::get('/storefront/delivery-zones',         [DeliveryZoneApi::class, 'publicIndex'],  ['name' => 'api.storefront.deliveryZone.index']);
+
+    // ---------------------------------------------------------------------
+    // স্টোরফ্রন্ট — কার্ট (guard: guest, doc/10-storefront-order.md §৪, §৬)
+    // ---------------------------------------------------------------------
+    Router::get('/storefront/cart',               [CartApi::class, 'show'],       ['name' => 'api.storefront.cart.show']);
+    Router::post('/storefront/cart/items',         [CartApi::class, 'addItem'],    ['name' => 'api.storefront.cart.addItem']);
+    Router::put('/storefront/cart/items/{id}',     [CartApi::class, 'updateItem'], ['name' => 'api.storefront.cart.updateItem']);
+    Router::delete('/storefront/cart/items/{id}',  [CartApi::class, 'removeItem'], ['name' => 'api.storefront.cart.removeItem']);
+    Router::delete('/storefront/cart',             [CartApi::class, 'clear'],      ['name' => 'api.storefront.cart.clear']);
+
+    // ---------------------------------------------------------------------
+    // স্টোরফ্রন্ট — চেকআউট ও অর্ডার ট্র্যাকিং (guard: guest, doc/10-storefront-order.md §৬)
+    // ---------------------------------------------------------------------
+    Router::post('/storefront/checkout',           [CheckoutApi::class, 'store'], ['name' => 'api.storefront.checkout']);
+    Router::get('/storefront/orders/{code}',       [CheckoutApi::class, 'track'], ['name' => 'api.storefront.order.track']);
 
     // ---------------------------------------------------------------------
     // ভাউচার
@@ -135,5 +165,36 @@ Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
         Router::put('/variants/{id}',            [ProductApi::class, 'updateVariant'], ['name' => 'api.variant.update']);
         Router::put('/images/{id}',              [ProductApi::class, 'updateImage'],  ['name' => 'api.image.update']);
         Router::delete('/images/{id}',           [ProductApi::class, 'deleteImage'],  ['name' => 'api.image.destroy']);
+
+        // =================================================================
+        //  বিক্রয় — ডেলিভারি জোন (doc/10-storefront-order.md)
+        // =================================================================
+        Router::get('/delivery-zones',         [DeliveryZoneApi::class, 'index'],   ['name' => 'api.deliveryZone.index']);
+        Router::get('/delivery-zones/{id}',    [DeliveryZoneApi::class, 'show'],    ['name' => 'api.deliveryZone.show']);
+        Router::post('/delivery-zones',        [DeliveryZoneApi::class, 'store'],   ['name' => 'api.deliveryZone.store']);
+        Router::put('/delivery-zones/{id}',    [DeliveryZoneApi::class, 'update'],  ['name' => 'api.deliveryZone.update']);
+        Router::delete('/delivery-zones/{id}', [DeliveryZoneApi::class, 'destroy'], ['name' => 'api.deliveryZone.destroy']);
+
+        Router::get('/customers',         [CustomerApi::class, 'index'],   ['name' => 'api.customer.index']);
+        Router::get('/customers/{id}',    [CustomerApi::class, 'show'],    ['name' => 'api.customer.show']);
+        Router::post('/customers',        [CustomerApi::class, 'store'],   ['name' => 'api.customer.store']);
+        Router::put('/customers/{id}',    [CustomerApi::class, 'update'],  ['name' => 'api.customer.update']);
+        Router::delete('/customers/{id}', [CustomerApi::class, 'destroy'], ['name' => 'api.customer.destroy']);
+
+        // =================================================================
+        //  বিক্রয় — অর্ডার (doc/10-storefront-order.md §৫, §৯)
+        // =================================================================
+        Router::get('/orders',                [OrderApi::class, 'index'],        ['name' => 'api.order.index']);
+        Router::get('/orders/pending',        [OrderApi::class, 'pending'],      ['name' => 'api.order.pending']);
+        Router::get('/orders/{id}',           [OrderApi::class, 'show'],         ['name' => 'api.order.show']);
+        Router::post('/orders/{id}/approve',  [OrderApi::class, 'approve'],      ['name' => 'api.order.approve']);
+        Router::post('/orders/{id}/reject',   [OrderApi::class, 'reject'],       ['name' => 'api.order.reject']);
+        Router::put('/orders/{id}/status',    [OrderApi::class, 'updateStatus'], ['name' => 'api.order.status']);
+
+        // পেমেন্ট — ম্যানুয়াল bKash/Nagad রেফারেন্স ভেরিফিকেশন (doc §৭)
+        Router::get('/orders/{id}/payments',        [PaymentApi::class, 'forOrder'], ['name' => 'api.order.payments']);
+        Router::post('/order-payments',             [PaymentApi::class, 'store'],    ['name' => 'api.orderPayment.store']);
+        Router::put('/order-payments/{id}/verify',  [PaymentApi::class, 'verify'],   ['name' => 'api.orderPayment.verify']);
+        Router::put('/order-payments/{id}/reject',  [PaymentApi::class, 'reject'],   ['name' => 'api.orderPayment.reject']);
     });
 });

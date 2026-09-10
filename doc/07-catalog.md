@@ -201,7 +201,10 @@ ProductService::syncVariants($productId, [
 
 ## ৬. HTTP API
 
-সব এন্ডপয়েন্টে `guard: admin` (স্টোরফ্রন্টের পাবলিক এন্ডপয়েন্ট ফেজ ৩-এ আসবে)।
+সব এন্ডপয়েন্টে `guard: admin` — স্টোরফ্রন্টের পাবলিক এন্ডপয়েন্ট
+(`guard: guest`) আলাদা, একই `CategoryApi`/`ProductApi` ক্লাসে
+`publicTree()`/`publicShow()`/`publicIndex()`/`publicShowBySlug()` মেথডে,
+দেখুন [10-storefront-order.md](10-storefront-order.md) §৬।
 
 ### ক্যাটাগরি
 
@@ -305,12 +308,14 @@ php database/install.php --demo
 
 ---
 
-## ৯. ফেজ ৩-এ যা যুক্ত হবে
+## ৯. ফেজ ৩ — ✅ যুক্ত হয়ে গেছে
 
 - স্টোরফ্রন্ট পাবলিক এন্ডপয়েন্ট (`/collections/{slug}`, `/products/{slug}`)
 - কার্ট ও চেকআউট — ভ্যারিয়েন্ট ধরে
-- অর্ডার পোস্ট হলে `Sale` + `CostOfGoodsSold` ভাউচার
+- অর্ডার `Shipped` হলে `Sale` + `CostOfGoodsSold` ভাউচার
   (ম্যাপিং [05-voucher.md](05-voucher.md) এ)
 
+পূর্ণ ডিজাইন ও বিল্ড বিস্তারিত [10-storefront-order.md](10-storefront-order.md) এ।
+
 > ছবি আপলোড (ক্যাটাগরি + প্রোডাক্ট গ্যালারি, রঙ-ভিত্তিক ট্যাগিং) ফেজ ৩ এর
-> অপেক্ষা না করে আগেই প্ল্যান করা হয়েছে — দেখুন [09-media-and-purchase-pricing.md](09-media-and-purchase-pricing.md)।
+> অপেক্ষা না করে আগেই প্ল্যান করা হয়েছিল — দেখুন [09-media-and-purchase-pricing.md](09-media-and-purchase-pricing.md)।

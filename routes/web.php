@@ -1,26 +1,25 @@
 <?php
 
 /**
- * স্টোরফ্রন্ট (কাস্টমার) রাউট।
+ * স্টোরফ্রন্ট (কাস্টমার) রাউট — সব `guard: guest` (ডিফল্ট)।
  *
- * Phase 2-তে এখানে ক্যাটালগ, প্রোডাক্ট, কার্ট, চেকআউট যোগ হবে —
- * রেফারেন্স সাইটের স্ট্রাকচার অনুযায়ী:
- *   /                      হোম (new arrivals, bestsellers, collections)
- *   /collections/{slug}    কালেকশন / ক্যাটাগরি
- *   /products/{slug}       প্রোডাক্ট ডিটেইল
- *   /cart                  কার্ট
- *   /checkout              চেকআউট (COD + ফ্রি ডেলিভারি ৳3000+)
- *   /account/orders        কাস্টমারের অর্ডার লিস্ট
+ * /                      হোম (new arrivals, bestsellers, collections)
+ * /collections/{slug}    কালেকশন — slug="all" মানে সব প্রোডাক্ট
+ * /products/{slug}       প্রোডাক্ট ডিটেইল
+ * /cart                  কার্ট
+ * /checkout              চেকআউট (COD + ডেলিভারি জোন + bKash/Nagad রেফারেন্স)
+ * /orders/track          গেস্ট অর্ডার ট্র্যাকিং (কোড + ফোন)
  *
- * Phase 1-এ শুধু একটা হেলথ/ইনডেক্স রাউট আছে।
+ * কন্ট্রোলার কোনো DB/সার্ভিস কল করে না — Api ক্লাসের একই static মেথড কল করে
+ * (Decision D-04, doc/01-architecture.md)।
  */
 
-use App\Core\Env;
 use App\Core\Router;
-Router::get('/', static function (): string {
-    $appUrl = rtrim((string) Env::get('APP_URL', ''), '/');
+use App\Modules\Sale\Controllers\StorefrontController;
 
-    return '<!doctype html><meta charset="utf-8">'
-        . '<title>' . htmlspecialchars((string) Env::get('APP_NAME', 'Ecommerce')) . '</title>'
-        . '<p>The storefront is coming in Phase 2. For now, see <a href="' . $appUrl . '/admin/vouchers">Admin → Vouchers</a>.</p>';
-}, ['name' => 'web.home']);
+Router::get('/',                    [StorefrontController::class, 'home'],       ['name' => 'web.home']);
+Router::get('/collections/{slug}',  [StorefrontController::class, 'collection'], ['name' => 'web.collection']);
+Router::get('/products/{slug}',     [StorefrontController::class, 'product'],    ['name' => 'web.product']);
+Router::get('/cart',                [StorefrontController::class, 'cart'],       ['name' => 'web.cart']);
+Router::get('/checkout',            [StorefrontController::class, 'checkout'],   ['name' => 'web.checkout']);
+Router::get('/orders/track',        [StorefrontController::class, 'trackOrder'], ['name' => 'web.order.track']);

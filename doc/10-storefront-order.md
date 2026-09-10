@@ -1,14 +1,16 @@
 # ১০ — স্টোরফ্রন্ট, কার্ট, চেকআউট ও অর্ডার (ফেজ ৩)
 
-> **স্ট্যাটাস:** পরিকল্পিত — এখনো বিল্ড হয়নি। [00-overview.md](00-overview.md) এর
+> **স্ট্যাটাস:** ✅ বিল্ড ও যাচাই করা। [00-overview.md](00-overview.md) এর
 > ফেজ ৩ ("স্টোরফ্রন্ট + কাস্টমার + কার্ট + চেকআউট + অর্ডার, Sale/COGS ভাউচার অটো
-> পোস্ট") এর পূর্ণ ডিজাইন এই ডকে। প্লাস দুটো নতুন সংযোজন, যেগুলো আগে পরিকল্পনায়
-> ছিল না কিন্তু বিল্ড শুরুর আগেই দরকার:
+> পোস্ট") এই ডকের ডিজাইন অনুযায়ীই বাস্তবায়িত। প্লাস দুটো সংযোজন, যেগুলো আগে
+> পরিকল্পনায় ছিল না কিন্তু বিল্ডের সময় দরকার হলো:
 >
 > ১. **ডেলিভারি জোন** — ঢাকার ভিতরে/বাইরে আলাদা চার্জ (§২)
 > ২. **ম্যানুয়াল মোবাইল ব্যাংকিং পেমেন্ট** — bKash/Nagad এর রেফারেন্স নাম্বার হাতে
 >    টাইপ করে জমা, অ্যাডমিন হাতে ভেরিফাই করে; পেমেন্ট গেটওয়ে ইন্টিগ্রেশন এখানে
 >    নেই — সেটা এখনো ফেজ ৫ এ পড়ে থাকবে, দরকার হলে তখন যোগ হবে (§৭)
+>
+> বিল্ড ক্রম ও যাচাইয়ের বিস্তারিত §১২ তে।
 
 ---
 
@@ -179,7 +181,9 @@ CREATE TABLE IF NOT EXISTS `carts` (
   `token`        VARCHAR(64)     NOT NULL COMMENT 'র‍্যান্ডম — কুকিতে/হেডারে থাকে, লগইন ছাড়াই কার্ট চেনার উপায়',
   `customer_id`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'চেকআউট/লগইনের সময় বসে',
   `created_at`   INT UNSIGNED    NOT NULL DEFAULT 0,
+  `created_by`   BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'গেস্টে সবসময় 0 — Model::create() এর সাধারণ স্ট্যাম্প',
   `updated_at`   INT UNSIGNED    NOT NULL DEFAULT 0,
+  `updated_by`   BIGINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_cart_token` (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -191,7 +195,9 @@ CREATE TABLE IF NOT EXISTS `cart_items` (
   `variant_id`  BIGINT UNSIGNED NOT NULL DEFAULT 0,
   `qty`         DECIMAL(20,4)   NOT NULL DEFAULT 1.0000,
   `created_at`  INT UNSIGNED    NOT NULL DEFAULT 0,
+  `created_by`  BIGINT UNSIGNED NOT NULL DEFAULT 0,
   `updated_at`  INT UNSIGNED    NOT NULL DEFAULT 0,
+  `updated_by`  BIGINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_cart_line` (`cart_id`, `product_id`, `variant_id`),
   KEY `ix_cart_items_cart` (`cart_id`),
@@ -335,6 +341,30 @@ Pending ──> Confirmed ──> Processing ──> Shipped ──> Delivered
 `order_payments` রো লাগবে যার `amount ≥ orders.grand_total` (§৭) — টাকা
 হাতে না এসে অপ্রয়োজনে পণ্য পাঠানো যাবে না।
 
+### অর্ডার অনুমোদন (Approval) — COD এর একমাত্র গেট
+
+অর্ডার এলেই `Pending` — অর্থাৎ কেউ এখনো ফোনে কথা বলে ঠিকানা/পণ্য নিশ্চিত
+করেনি। বাংলাদেশে COD অর্ডারে ভুয়া নাম্বার, ভুল ঠিকানা, বা শেষমুহূর্তে
+মত-বদল খুবই সাধারণ — প্যাকিং/কুরিয়ারে দেওয়ার আগে একজন মানুষ ফোনে
+যাচাই না করলে রিটার্ন-লস (কুরিয়ার চার্জ দুই দিকেই, প্যাকিং খরচ) অনেক বেড়ে
+যায়। তাই `Pending → Confirmed` ধাপটা সাধারণ একটা স্ট্যাটাস-বদল না —
+এটাই **অ্যাডমিনের অর্ডার-অনুমোদনের জায়গা**, আর এটাই **COD অর্ডারের একমাত্র/
+চূড়ান্ত ফ্রড-বিরোধী গেট** (bKash/Nagad এ এর ওপরেও পেমেন্ট-ভেরিফাই গেট আছে,
+ওপরের অনুচ্ছেদ)।
+
+**অ্যাডমিনে আলাদা "Pending Orders" সারি/queue** — নতুন অর্ডার এলেই এখানে
+জমা হয়, তারিখ-ক্রমে (আগে যেটা এসেছে আগে কল)। প্রতিটা রো তে দুটো বাটন:
+
+| বাটন | ফল |
+|---|---|
+| **Approve** | `Pending → Confirmed`। COD অর্ডারে এরপর সরাসরি Processing/Shipped এ নেওয়া যায় — আর কোনো গেট নাই |
+| **Reject** | `Pending → Cancelled`, কারণ **বাধ্যতামূলক note** সহ (ফোনে পাওয়া যায়নি / ভুল নাম্বার / কাস্টমার নিজেই বাতিল করেছে) — কোনো ভাউচার/স্টক ছোঁয় না (§৮ "Cancelled — কোনো ভাউচার না") |
+
+`OrderService::approve()` / `reject()` শুধু `Pending` থেকেই কাজ করে —
+`Confirmed`/`Processing` হয়ে যাওয়া অর্ডারে এই দুটো বাটন দেখানোর দরকার নাই
+(তখন অন্য ট্রানজিশন — Cancel আলাদাভাবে অনুমোদিত থাকলে সেটা §৫ এর সাধারণ
+গ্রাফ দিয়েই, নতুন কিছু না)।
+
 ---
 
 ## ৬. HTTP API — স্টোরফ্রন্ট (`guard: guest`)
@@ -346,10 +376,10 @@ erp_saas / ecommerce এর সাধারণ রেসপন্স ফরম�
 
 | Method | URI | কী | নোট |
 |---|---|---|---|
-| `GET` | `/api/v1/storefront/categories` | পুরো গাছ, শুধু পাবলিক কলাম | `CategoryService::tree()` রিইউজ, কিন্তু আউটপুটে শুধু `id,name,slug,image,children,isFeatured` — অ্যাডমিন-অনলি কলাম (`created_by` ইত্যাদি) বাদ |
-| `GET` | `/api/v1/storefront/categories/{slug}` | একটা + ব্রেডক্রাম্ব | |
-| `GET` | `/api/v1/storefront/products` | ফিল্টার: `category` (slug), `q`, `sort` (`newest`\|`price_asc`\|`price_desc`), `isFeatured`, `isNew`, `on_sale`, `page`, `per_page` | `ProductService::decorate()` এর আউটপুট রিইউজ, `purchase_price` বাদ, `stock` এর বদলে বুলিয়ান `in_stock` |
-| `GET` | `/api/v1/storefront/products/{slug}` | পূর্ণ ডিটেইল — ভ্যারিয়েন্ট, ছবি (রঙ-ভিত্তিক), `effectivePrice()` | `hydrate()` রিইউজ, `purchase_price`/`stock_alert` বাদ |
+| `GET` | `/api/v1/storefront/categories` | পুরো গাছ, শুধু পাবলিক কলাম | `CategoryApi::publicTree()` — `CategoryService::tree(true)` রিইউজ, আউটপুটে শুধু `id,name,slug,image,isFeatured,children` (রিকার্সিভ) |
+| `GET` | `/api/v1/storefront/categories/{slug}` | একটা + ব্রেডক্রাম্ব | `CategoryApi::publicShow()` |
+| `GET` | `/api/v1/storefront/products` | ফিল্টার: `category` (slug), `q`, `sort` (`newest`\|`price_asc`\|`price_desc`), `isFeatured`, `isNew`, `on_sale`, `page`, `per_page` | `ProductApi::publicIndex()` — `purchase_price` বাদ, exact `stock` এর বদলে বুলিয়ান `in_stock` |
+| `GET` | `/api/v1/storefront/products/{slug}` | পূর্ণ ডিটেইল — ভ্যারিয়েন্ট, ছবি (রঙ-ভিত্তিক), `effectivePrice()` | `ProductApi::publicShowBySlug()` — `purchase_price`/`stock_alert`/exact stock বাদ, প্রোডাক্ট ও প্রতি ভ্যারিয়েন্টে `in_stock` বুলিয়ান |
 
 `price`, `regular_price`, `on_offer`, `discount_percent` — এই চারটা কি
 [07-catalog.md](07-catalog.md) এর `effectivePrice()` থেকে ইতিমধ্যেই প্রতিটা
@@ -357,11 +387,33 @@ erp_saas / ecommerce এর সাধারণ রেসপন্স ফরম�
 — প্রোডাক্ট কার্ডের "Sale price / Regular price" ব্লক এই চারটা ফিল্ড দিয়েই
 বানানো যাবে, নতুন কোনো ক্যালকুলেশন লাগবে না।
 
+**`sort`/`on_sale` — `ProductService::search()` এ নতুন ফিল্টার** (backward-compatible,
+অ্যাডমিন লিস্টিং এই দুটো না পাঠালে আগের আচরণই থাকে): `on_sale` SQL এ
+`offer_price > 0 AND offer_price < sale_price AND (offer_start/end রেঞ্জে)`
+শর্ত যোগ করে (`effectivePrice()`/`offerRunning()` এর একই যুক্তি, pagination এর
+`total` ঠিক রাখতে post-filter না, SQL `WHERE`)। `sort` অর্ডার করে `sale_price`
+কলাম দিয়ে (offer-aware effective price দিয়ে না — সহজ আনুমানিক, যথেষ্ট v1 এ)।
+
+**`ProductApi::publicListResponse(array $filters)` — Request থেকে আলাদা করা**:
+`publicIndex()` (আসল HTTP এন্ডপয়েন্ট) এটাকে `Request::string()`/`int()` দিয়ে
+পড়া ফিল্টার পাঠিয়ে কল করে। কিন্তু `Request::all()` এক রিকোয়েস্টে **একবারই**
+ক্যাশ হয় ([03-response-format.md](03-response-format.md) এর ডিবাগ নোটের সাথে
+সম্পর্কিত internal ব্যাপার) — হোমপেজে "New Arrivals" আর "Bestsellers" দুটো
+সেকশন **একই রিকোয়েস্টে** আলাদা ফিল্টারে (`isNew=1` vs `isFeatured=1`) লাগে,
+যেটা `Request` পড়া কোনো মেথড দিয়ে দ্বিতীয়বার সম্ভব না। তাই `publicListResponse()`
+ফিল্টার আর্গুমেন্ট হিসেবে নেয় (Request ছোঁয় না), আর `ProductApi::section(array $filters)`
+(শুধু প্রোডাক্ট অ্যারে ফেরত দেয়, pagination মেটা ছাড়া) `StorefrontController::home()`
+সরাসরি কল করে — এই বাগটা নিজে বিল্ড করার সময় ধরা পড়েছিল, ঠিক করা হয়েছে।
+
 ### ডেলিভারি
 
 | Method | URI | কী |
 |---|---|---|
 | `GET` | `/api/v1/storefront/delivery-zones` | সক্রিয় জোন লিস্ট (`id, name, fee, free_delivery_threshold`) — চেকআউট রেডিও বানাতে |
+
+`DeliveryZoneApi::publicIndex()` — `index()` (অ্যাডমিন, §৯) থেকে ইচ্ছাকৃতভাবে
+আলাদা মেথড, সবসময় `active_only = 1` জোর করে দেয়; ক্লায়েন্ট প্যারামিটার দিয়ে
+নিষ্ক্রিয় জোন দেখতে পারবে না।
 
 ### কার্ট (টোকেন কুকি/হেডার দিয়ে চেনে, §৪)
 
@@ -403,25 +455,26 @@ POST /api/v1/storefront/checkout
 সফল রেসপন্স:
 
 ```json
-{ "status": 1, "m": [["s", "অর্ডার নেওয়া হয়েছে — ORD-000045।"]],
-  "order": { "code": "ORD-000045", "grand_total": 6370.0, "status": "Pending", ... } }
+{ "status": 1, "m": [["s", "Order placed — ORD-000045."]],
+  "order": { "code": "ORD-000045", "grand_total": 6370.0, "status": 1, ... } }
 ```
 
 সার্ভার-সাইড ধাপ (`OrderService::checkout()`, পুরোটা `DB::transaction()`):
 
-1. কার্ট খালি না — খালি হলে `"কার্ট খালি।"`
+1. কার্ট খালি না — খালি হলে `"Your cart is empty."`
 2. প্রতি লাইনে স্টক আছে কি না চেক (`StockService::onHand() ≥ qty`), না
-   থাকলে `"<নাম> এর স্টক শেষ।"`
+   থাকলে `"<name> is out of stock."`
 3. `customers` এ `phone` দিয়ে খোঁজা/তৈরি (§৩)
 4. প্রতি লাইনে `ProductService::effectivePrice()` দিয়ে **এই মুহূর্তের** দাম
    বের করে `order_items` স্ন্যাপশট বসানো (কার্টে যা দেখানো হয়েছিল সেটা না —
    race condition এড়াতে চেকআউটেই আবার হিসাব)
 5. `delivery_zones` থেকে fee কপি, threshold চেক করে ফ্রি হলে `0`
 6. হেডার ইনসার্ট, `code = CodeGenerator::next('order', 'ORD')`,
-   `status = Pending`
-7. bKash/Nagad হলে `order_payments` এ `status = Pending` রো (এখনো ভাউচার
+   `status = Pending`, প্রতি লাইন `order_items` এ (স্ন্যাপশট, audit কলাম নাই — §১১ O-13)
+7. `order_status_log` এ `0 → Pending` রো ("Order placed") — এখান থেকেই অডিট ট্রেইল শুরু
+8. bKash/Nagad হলে `order_payments` এ `status = Pending` রো (এখনো ভাউচার
    পোস্ট হয় না — ভেরিফাইয়ের অপেক্ষায়, §৭)
-8. কার্ট খালি করা (`cart_items` ডিলিট)
+9. কার্ট খালি করা (`cart_items` ডিলিট)
 
 > **স্টক এখনো কমে না এই ধাপে** — শুধু availability চেক হয়। আসল
 > `StockService::move()` হয় `Shipped` এ যাওয়ার সময় (§৮) — কারণ `Pending`
@@ -459,6 +512,8 @@ CREATE TABLE IF NOT EXISTS `order_payments` (
   `verified_at`     INT UNSIGNED    NOT NULL DEFAULT 0,
   `created_at`      INT UNSIGNED    NOT NULL DEFAULT 0,
   `created_by`      BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `updated_at`      INT UNSIGNED    NOT NULL DEFAULT 0,
+  `updated_by`      BIGINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `ix_payment_order` (`order_id`),
   CONSTRAINT `fk_payment_order` FOREIGN KEY (`order_id`)
@@ -593,52 +648,87 @@ bKash/Nagad অগ্রিম নেওয়া থাকলে সেটা �
 
 | Method | URI | কী |
 |---|---|---|
-| `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/delivery-zones[/{id}]` | জোন CRUD — `name`, `fee`, `free_delivery_threshold`, `is_default?`, `sort_order?` |
-| `GET` | `/api/v1/orders` | ফিল্টার: `status[]`, `customer_id`, `payment_method`, `from`, `to`, `code`, `page`, `per_page` |
-| `GET` | `/api/v1/orders/{id}` | পূর্ণ — আইটেম, পেমেন্ট, স্ট্যাটাস লগ, ভাউচার লিংক (`VoucherDetails::byReference()`) |
-| `PUT` | `/api/v1/orders/{id}/status` | `{status, note?}` — ট্রানজিশন যাচাই (§৫) + ভাউচার পোস্ট (§৮) |
+| `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/delivery-zones[/{id}]` | জোন CRUD — `name`, `fee`, `free_delivery_threshold`, `is_default?`, `sort_order?`; ডিলিট হয় না কোনো অর্ডার এই জোন ব্যবহার করলে |
+| `GET` | `/api/v1/orders` | ফিল্টার: `status`, `customer_id`, `payment_method`, `from`, `to`, `code`, `page`, `per_page` |
+| `GET` | `/api/v1/orders/pending` | শুধু `Pending`, পুরোনোটা আগে (পেজিনেশন ছাড়া — ছোট queue) — `/admin/orders/pending` এই কল করে |
+| `GET` | `/api/v1/orders/{id}` | পূর্ণ — আইটেম, পেমেন্ট, স্ট্যাটাস লগ, `status_label`, `next_states` (কোন বাটন দেখাবে সেটা এনাম থেকেই ঠিক হয়) |
+| `POST` | `/api/v1/orders/{id}/approve` | `{note?}` — **শুধু `Pending` থেকে**, `→ Confirmed` (§৫ "অর্ডার অনুমোদন") |
+| `POST` | `/api/v1/orders/{id}/reject` | `{note}` (বাধ্যতামূলক) — **শুধু `Pending` থেকে**, `→ Cancelled`, কোনো ভাউচার/স্টক ছোঁয় না |
+| `PUT` | `/api/v1/orders/{id}/status` | `{status, note?}` — `Confirmed` এর পরের ধাপগুলোর জন্য (Processing/Shipped/Delivered/Returned) — ট্রানজিশন যাচাই (§৫) + ভাউচার পোস্ট (§৮) |
 | `GET` | `/api/v1/orders/{id}/payments` | §৭ |
 | `POST` | `/api/v1/order-payments` | §৭ |
 | `PUT` | `/api/v1/order-payments/{id}/verify` | §৭ |
 | `PUT` | `/api/v1/order-payments/{id}/reject` | §৭ |
-| `GET` | `/api/v1/customers` | ফিল্টার: `q` (নাম/ফোন), `page`, `per_page` |
-| `GET` | `/api/v1/customers/{id}` | প্রোফাইল + অর্ডার হিস্টোরি + `LedgerStatement::balance()` |
+| `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/customers[/{id}]` | পরিকল্পনার চেয়ে বেশি — শুধু GET না, পুরো CRUD (Supplier এর প্যাটার্নে) যাতে অ্যাডমিন ফোন-অর্ডার কাস্টমার হাতেও যোগ/এডিট করতে পারে, opening balance দিলে `OpeningCustomer` ভাউচার পোস্ট হয়; `GET .../{id}` এ প্রোফাইল + `ledger_balance` (`LedgerStatement::balance()`) — অর্ডার হিস্টোরি এখনো নাই (`orders` ফিল্ড খালি রাখা আছে) |
+
+`approve`/`reject` ইচ্ছাকৃতভাবে `status` এন্ডপয়েন্ট থেকে আলাদা —
+জেনেরিক `PUT .../status` এ `{status: 2}` পাঠিয়েও একই কাজ হতো, কিন্তু
+এটা admin UI তে ভুল-চাপে বাতিল/অনুমোদন হয়ে যাওয়ার ঝুঁকি রাখে (dropdown
+থেকে ভুল ভ্যালু), যেখানে এই দুটো এন্ডপয়েন্ট শুধু নির্দিষ্ট দুটো বড়,
+স্বতন্ত্র বাটনের (§৫) পেছনে বসবে — **Reject এ `note` বাধ্যতামূলক**
+(কেন বাতিল সবসময় লেখা থাকা উচিত, রিপোর্ট/ট্রেন্ড দেখতে কাজে লাগবে)।
 
 `DELETE /orders/{id}` **নাই** — অর্ডার হার্ড-ডিলিট হয় না, শুধু
 `Cancelled`/`Returned` স্ট্যাটাসে যায় (ঠিক ভ্যারিয়েন্টের মতোই,
 [07-catalog.md](07-catalog.md) — ইতিহাস কখনো হারানো যাবে না)।
 
+### অ্যাডমিন পেজ
+
+| পেজ | কী করা যায় |
+|---|---|
+| `/admin/orders/pending` | **অ্যাডমিনের হোম-বেস** — শুধু `Pending` অর্ডার, পুরোনোটা আগে; প্রতিটা রো তে ফোন/ঠিকানা/আইটেম + বড় **Approve**/**Reject** বাটন |
+| `/admin/orders` | সব অর্ডার, ফিল্টার (স্ট্যাটাস, পেমেন্ট মেথড, তারিখ, কোড) |
+| `/admin/orders/{id}` | ডিটেইল — আইটেম, ডেলিভারি ঠিকানা, পেমেন্ট (bKash/Nagad হলে ভেরিফাই/রিজেক্ট বাটন এখানেই), স্ট্যাটাস টাইমলাইন, `next_states` থেকে গড়া পরের ধাপের বাটন |
+| `/admin/delivery-zones`, `.../create`, `.../{id}/edit` | জোন তালিকা + ফি/থ্রেশহোল্ড/ডিফল্ট এডিট (Supplier এর প্যাটার্নে list+form আলাদা পেজ) |
+| `/admin/customers`, `.../create`, `.../{id}/edit` | তালিকা (সার্চ), এডিট পেজে লেজার ব্যালেন্স দেখা যায় |
+
 ---
 
-## ১০. মডিউল কাঠামো (পরিকল্পিত)
+## ১০. মডিউল কাঠামো — ✅ বিল্ড হয়ে গেছে
 
 ```
 app/Modules/Sale/
 ├── Models/       Customer · Cart · CartItem · DeliveryZone
 │                 Order · OrderItem · OrderStatusLog · OrderPayment
-├── Services/     CustomerService  — dedup/lazy ledger
-│                 CartService      — items + লাইভ pricing
-│                 DeliveryZoneService
-│                 OrderService     — checkout() / changeStatus() / ভাউচার পোস্ট
-│                 PaymentService   — record() / verify() / reject()
-├── Controllers/  StorefrontController (cart/checkout/track পেজ)
-│                 OrderController · DeliveryZoneController (admin পেজ)
-├── Api/          CartApi · CheckoutApi · OrderApi · PaymentApi · DeliveryZoneApi · CustomerApi
-└── Views/        cart/index · checkout/index · order/track
-                  order/{list,show} · delivery-zone/index    (admin)
+├── Services/     CustomerService     — save() / findOrCreateByPhone() / delete() / list()
+│                 CartService         — resolveCart() / details() / addItem() / updateItemQty() / removeItem() / clear()
+│                 DeliveryZoneService — save() / delete() / list()
+│                 OrderService        — checkout() / approve() / reject() / changeStatus() / pendingQueue()
+│                                       / list() / details() / detailsByCodeAndPhone() + ভাউচার পোস্ট (private)
+│                 PaymentService      — record() / verify() / reject()
+├── Controllers/  StorefrontController — home/collection/product/cart/checkout/trackOrder (পাবলিক পেজ, একটাই কন্ট্রোলার
+│                                        Catalog+Sale দুই মডিউলের Api কল করে — পাবলিক সাইট কোনো একটা মডিউলের না)
+│                 OrderController · DeliveryZoneController · CustomerController (অ্যাডমিন পেজ)
+├── Api/          CartApi · CartTokenResolver (কুকি/হেডার থেকে token রেজলভ — CartApi ও CheckoutApi দুটোতেই লাগে)
+│                 CheckoutApi · OrderApi · PaymentApi · DeliveryZoneApi · CustomerApi
+└── Views/
+    ├── storefront/  home · collection · product · cart · checkout · track · not-found · _product-card (partial)
+    ├── order/       pending-list · list · show
+    ├── delivery-zone/ list · form
+    └── customer/    list · form
 ```
 
-Catalog মডিউলে যোগ হবে (নতুন মডিউল না — বিদ্যমান ক্লাসেই মেথড):
+`resources/views/layouts/storefront.php` — পাবলিক সাইটের লেআউট (প্রোমো বার,
+নেভ, কার্ট ব্যাজ, ফুটার), ঠিক `layouts/admin.php` এর মতোই কোনো নির্দিষ্ট মডিউলের
+না, `resources/views/layouts/` এ।
+
+Catalog মডিউলে যোগ হয়েছে (নতুন মডিউল না — বিদ্যমান ক্লাসেই মেথড, যেমন
+পরিকল্পনা করা হয়েছিল):
 
 ```
-app/Modules/Catalog/Api/CategoryApi.php   + publicTree() / publicShow()
-app/Modules/Catalog/Api/ProductApi.php    + publicIndex() / publicShowBySlug()
+app/Modules/Catalog/Api/CategoryApi.php    + publicTree() / publicShow()
+app/Modules/Catalog/Api/ProductApi.php     + publicIndex() / publicListResponse() / section() / publicShowBySlug()
+app/Modules/Catalog/Services/ProductService.php  + search() এ sort/on_sale ফিল্টার (applySort() প্রাইভেট মেথড)
 ```
 
 `database/schema/005_order.sql` — এই ডকের সব টেবিল (§২–৭), `App\Enum\OrderStatus`
-/ `PaymentMethod` / `PaymentStatus` নতুন এনাম ফাইল, `App\Enum\StockChangeType::Sale`
-(value 2, আগে থেকেই সংজ্ঞায়িত, [08-purchase.md](08-purchase.md) §৩ — "ফেজ ৫" কমেন্টটা
-এখন এই ফেজেই বাস্তবায়িত হবে) আর কোনো পরিবর্তন লাগবে না।
+/ `PaymentMethod` / `PaymentStatus` নতুন এনাম ফাইল (`canTransitionTo()`/`nextStates()`
+সহ — §৫ এর গ্রাফটাই এনামে এনকোড করা), `App\Enum\StockChangeType::Sale`
+(value 2, আগে থেকেই সংজ্ঞায়িত, [08-purchase.md](08-purchase.md) §৩ — "ফেজ ৫"
+কমেন্টটা এই ফেজেই বাস্তবায়িত হলো)।
+
+`app/Core/Menu.php` — নতুন "Sale" গ্রুপ: Pending Orders, Orders, Customers,
+Delivery Zones।
 
 ---
 
@@ -656,25 +746,50 @@ app/Modules/Catalog/Api/ProductApi.php    + publicIndex() / publicShowBySlug()
 | O-08 | গেস্ট-ফার্স্ট চেকআউট, `customers.phone` দিয়ে ডিডুপ | COD-নির্ভর বাজারে লগইন-বাধ্যতা মানে কার্ট abandonment; ফোন নাম্বার প্রাকৃতিক ইউনিক আইডি |
 | O-09 | কার্টে দাম জমা থাকে না, সবসময় লাইভ `effectivePrice()` | অফার শুরু/শেষ হলে কার্টে সাথে সাথে প্রতিফলিত হবে; চেকআউটেই আসল স্ন্যাপশট নেয় |
 | O-10 | রেফারেন্স সাইটের "fake original price" প্যাটার্ন কপি হবে না — শুধু কার্ড/PDP লেআউট | ভোক্তা অধিকার আইন সমস্যা; `offer_price` সবসময় genuine discount |
+| O-11 | `Pending → Confirmed` একটা আলাদা **Approve/Reject** এন্ডপয়েন্ট জোড়া, জেনেরিক status-বদল না; এটাই COD অর্ডারের একমাত্র ফ্রড-বিরোধী গেট | COD এ ভুয়া/ভুল-নাম্বার অর্ডার সাধারণ — প্যাকিং/কুরিয়ারের আগে ফোনে মানুষ-যাচাই ছাড়া রিটার্ন-লস বাড়ে; ব্যবহারকারীর সরাসরি অনুরোধ (২০২৬-০৯-১০) |
+| O-12 | Reject এ `note` বাধ্যতামূলক, Approve এ ঐচ্ছিক | বাতিলের কারণ সবসময় ট্র্যাক করা দরকার (রিপোর্টিং/প্যাটার্ন দেখতে — কোন এলাকায় ভুয়া অর্ডার বেশি ইত্যাদি) |
+| O-13 | `carts`/`cart_items`/`order_payments` এ চারটাই audit কলাম (`created/updated_at/by`), কিন্তু `order_items`/`order_status_log` এ audit কলামই নাই — insert `DB::insert()` দিয়ে সরাসরি, `Model::create()` দিয়ে না | `Model::create()`/`updateById()` সবসময় চারটা কলাম স্ট্যাম্প করতে চায় — যে টেবিল বদলাতে পারে (cart, payment) তার দরকার আছে, যেটা শুধু append-only স্ন্যাপশট/লগ তার দরকার নাই (`purchase_items`/`stock_ledger` এর একই প্যাটার্ন) — বিল্ডের সময় "Unknown column" এরর দিয়ে ধরা পড়েছিল, schema-তে ঠিক করা হয়েছে |
+| O-14 | `ProductApi::publicListResponse(array $filters)` ফিল্টার আর্গুমেন্ট নেয়, `Request` পড়ে না; `publicIndex()` (HTTP) আর `section()` (হোমপেজ ব্লক) দুটোই এটাকে কল করে | হোমপেজে "New Arrivals"/"Bestsellers" একই রিকোয়েস্টে ভিন্ন ফিল্টারে লাগে — `Request::all()` এক রিকোয়েস্টে একবারই মূল্যায়িত হয়, তাই Request-নির্ভর মেথড দ্বিতীয়বার ভিন্ন ফিল্টারে কল করা যেত না |
+| O-15 | প্রোডাক্ট কার্ডের CSS partial-এ (`_product-card.php`) না, লেআউটে (`storefront.php`) একবার | partial একটা লিস্টিং পেজে N বার রেন্ডার হয় (প্রতি প্রোডাক্টে একবার) — `<style>` ভেতরে রাখলে পেজে N বার ডুপ্লিকেট হতো (বিল্ডের সময় ধরা পড়েছিল — ৩-৪টা প্রোডাক্টে ৫২টা `p-card` স্ট্রিং!) |
+| O-16 | কাস্টমার/ডেলিভারি-জোনের অ্যাডমিন API পরিকল্পনার চেয়ে বেশি — শুধু GET না, পুরো CRUD | Supplier-এর মতোই অ্যাডমিন হাতে ফোন-অর্ডার কাস্টমার/নতুন জোন যোগ করতে পারবে, না হলে ছোট সংশোধনের জন্যও DB-তে হাত দিতে হতো |
 
 ---
 
-## ১২. পরের ধাপ
+## ১২. বিল্ড ক্রম — ✅ সম্পূর্ণ
 
-এই ডকটা প্ল্যান — বিল্ড শুরু হয়নি। প্রস্তাবিত ক্রম ([08-purchase.md](08-purchase.md)
-এর ধরনেই):
+প্রস্তাবিত ক্রম অনুযায়ীই বিল্ড হয়েছে ([08-purchase.md](08-purchase.md) এর ধরনে):
 
-1. `schema/005_order.sql` + `OrderStatus`/`PaymentMethod`/`PaymentStatus` enum
-2. **DeliveryZone** — মডেল/সার্ভিস/CRUD (সবচেয়ে ছোট, স্বাধীন — আগে শেষ করা যায়)
-3. **Customer** — dedup + lazy ledger (Supplier প্যাটার্ন কপি)
-4. **Cart** — টোকেন কুকি, লাইভ pricing
-5. Catalog এ `publicTree()`/`publicIndex()`/`publicShowBySlug()` — storefront ব্রাউজিং
-6. **OrderService::checkout()** — কার্ট → অর্ডার, স্টক এখনো না কমা
-7. **OrderService::changeStatus()** + ভাউচার পোস্ট (§৮) — সবচেয়ে ঝুঁকিপূর্ণ অংশ, প্রতিটা ট্রানজিশন আলাদা টেস্ট
-8. **PaymentService** — রেকর্ড/ভেরিফাই/রিজেক্ট
-9. স্টোরফ্রন্ট ভিউ — কালেকশন গ্রিড (§০ রেফারেন্স), PDP, কার্ট ড্রয়ার, চেকআউট ফর্ম, অর্ডার ট্র্যাকিং
-10. অ্যাডমিন ভিউ — অর্ডার লিস্ট/ডিটেইল (স্ট্যাটাস বদলানোর বাটন), পেমেন্ট ভেরিফাই স্ক্রিন, ডেলিভারি জোন সেটিংস
+1. ✅ `schema/005_order.sql` + `OrderStatus`/`PaymentMethod`/`PaymentStatus` enum
+2. ✅ **DeliveryZone** — মডেল/সার্ভিস/CRUD
+3. ✅ **Customer** — dedup + lazy ledger (Supplier প্যাটার্ন কপি) + পূর্ণ অ্যাডমিন CRUD
+4. ✅ **Cart** — টোকেন কুকি (`CartTokenResolver`), লাইভ pricing
+5. ✅ Catalog এ `publicTree()`/`publicShow()`/`publicIndex()`/`publicShowBySlug()` — storefront ব্রাউজিং
+6. ✅ **OrderService::checkout()** — কার্ট → অর্ডার, স্টক এখনো না কমা
+7. ✅ **OrderService::approve()/reject()** + `changeStatus()` + ভাউচার পোস্ট (§৮)
+8. ✅ **PaymentService** — রেকর্ড/ভেরিফাই/রিজেক্ট
+9. ✅ অ্যাডমিন ভিউ — `/admin/orders/pending` (Approve/Reject), অর্ডার লিস্ট/ডিটেইল, পেমেন্ট ভেরিফাই, ডেলিভারি জোন/কাস্টমার CRUD
+10. ✅ স্টোরফ্রন্ট ভিউ — হোম, কালেকশন গ্রিড (§০ রেফারেন্স), PDP (সাইজ/রঙ সিলেক্টর), কার্ট, চেকআউট, অর্ডার ট্র্যাকিং
 
-প্রতি ধাপ শেষে: `install.php` চলে কিনা, ট্রায়াল ব্যালেন্স মেলে কিনা
-(`SUM(debit) = SUM(credit)`), আর `products.stock` স্টক লেজারের সাথে মেলে
-কিনা — এই তিনটা যাচাই [08-purchase.md](08-purchase.md) এর মতোই প্রতি ধাপে।
+### যাচাই
+
+প্রতিটা ধাপে `install.php` (idempotent) + ট্রায়াল ব্যালেন্স (`SUM(debit) =
+SUM(credit)`) চেক করা হয়েছে ([08-purchase.md](08-purchase.md) এর মতোই), প্লাস
+আসল HTTP রিকোয়েস্ট দিয়ে (Api ক্লাস সরাসরি কল করে, cookie/session সহ curl দিয়ে)
+পুরো কাস্টমার জার্নি এন্ড-টু-এন্ড:
+
+- **COD অর্ডার** — checkout → approve → Processing → Shipped (Sale compound
+  ভাউচার Dr CodReceivable / Cr Sales + ShippingIncome, ঠিক অঙ্কে; COGS ভাউচার;
+  স্টক সঠিক পরিমাণে কমেছে) → Delivered → Returned (টাকা ও স্টক দুটোই ফেরত,
+  ট্রায়াল ব্যালেন্স তখনো balanced)
+- **bKash অগ্রিম অর্ডার** — payment ভেরিফাই না করে Processing-এ যাওয়ার চেষ্টা
+  আটকে গেছে; ভেরিফাই করার পর `CustomerReceive` (Dr MobileBanking / Cr
+  AdvanceFromCustomer) পোস্ট হয়ে `Shipped`-এ `AdvanceFromCustomer` ঠিক নেট
+  শূন্যে মিলেছে (O-05)
+- **Reject flow** — note ছাড়া আটকে গেছে, note দিয়ে Cancelled, কোনো ভাউচার/স্টক
+  ছোঁয়নি
+- **স্টোরফ্রন্ট** — হোম/কালেকশন/PDP/কার্ট/চেকআউট/ট্র্যাকিং সবগুলো আসল ব্রাউজার
+  সেশনের মতো (কুকি persist করে) টেস্ট করা — ভ্যারিয়েন্ট সিলেক্ট করে দাম বদল,
+  কার্টে merge, ফ্রি-ডেলিভারি থ্রেশহোল্ড, ভুল ফোনে ট্র্যাকিং না পাওয়া — সব ঠিক
+- প্রতি ধাপের টেস্ট ডেটা শেষে DB থেকে মুছে পরিষ্কার রাখা হয়েছে (শুধু ডেমো
+  ক্যাটাগরি/প্রোডাক্ট/একটা Pending অর্ডার ইচ্ছাকৃতভাবে রাখা — যাতে অ্যাডমিন
+  Approve ফ্লো সরাসরি টেস্ট করা যায়)

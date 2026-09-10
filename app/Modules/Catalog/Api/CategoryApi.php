@@ -117,4 +117,63 @@ final class CategoryApi
 
         return Response::success('Image removed.');
     }
+
+    // -------------------------------------------------------------------------
+    // স্টোরফ্রন্ট (guard: guest) — doc/10-storefront-order.md §৬
+    // -------------------------------------------------------------------------
+
+    /** GET /api/v1/storefront/categories — শুধু সক্রিয়, শুধু পাবলিক কলাম */
+    public static function publicTree(): array
+    {
+        return Response::success('', [
+            'tree'     => self::publicizeTree(CategoryService::tree(true)),
+            'featured' => array_map([self::class, 'publicRow'], CategoryService::featured()),
+        ]);
+    }
+
+    /** GET /api/v1/storefront/categories/{slug} */
+    public static function publicShow(): array
+    {
+        $category = Category::bySlug((string) Request::param('slug', ''));
+
+        if ($category === [] || (int) $category['isActive'] !== 1) {
+            return Response::error('Category not found.');
+        }
+
+        return Response::success('', [
+            'category'   => self::publicRow($category),
+            'breadcrumb' => CategoryService::breadcrumb((int) $category['id']),
+        ]);
+    }
+
+    /**
+     * @param  array<int,array<string,mixed>> $nodes
+     * @return array<int,array<string,mixed>>
+     */
+    private static function publicizeTree(array $nodes): array
+    {
+        return array_map(static function (array $node): array {
+            $row             = self::publicRow($node);
+            $row['children'] = self::publicizeTree($node['children'] ?? []);
+
+            return $row;
+        }, $nodes);
+    }
+
+    /**
+     * অ্যাডমিন-অনলি কলাম (created_by, path, depth …) বাদ — শুধু যা কার্ডে/মেনুতে লাগে।
+     *
+     * @param  array<string,mixed> $category
+     * @return array<string,mixed>
+     */
+    private static function publicRow(array $category): array
+    {
+        return [
+            'id'         => (int) $category['id'],
+            'name'       => $category['name'],
+            'slug'       => $category['slug'],
+            'image'      => $category['image'],
+            'isFeatured' => (int) $category['isFeatured'] === 1,
+        ];
+    }
 }

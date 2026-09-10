@@ -56,7 +56,7 @@ erp_saas এর অ্যাডমিন লেআউটের কাঠাম�
 কখনো আলাদা হয়ে যাবে না)।
 
 ```php
-['label' => 'ভাউচার লিস্ট', 'path' => '/admin/vouchers', 'icon' => 'list', 'match' => 'exact'],
+['label' => 'Voucher List', 'path' => '/admin/vouchers', 'icon' => 'list', 'match' => 'exact'],
 ```
 
 | ফিল্ড | মানে |
@@ -73,7 +73,7 @@ erp_saas এর অ্যাডমিন লেআউটের কাঠাম�
 
 উপলব্ধ আইকন: `home` `grid` `book` `list` `plus` `layers` `bar-chart` `scale`
 `user` `settings` `power` `wallet` `trend-up` `trend-down` `in` `out`
-`chevron` `menu` `check` `alert`
+`tag` `box` `folder` `sliders` `ruler` `truck` `chevron` `menu` `check` `alert`
 
 ## ড্যাশবোর্ড
 

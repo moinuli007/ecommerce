@@ -46,7 +46,7 @@ web আর admin এর প্রতিটি ডেটা API লেয়া�
 |---|---|---|
 | **১** | ভিত্তি: Core লেয়ার, স্ট্যাটিক রাউটার, রেসপন্স ফরম্যাট, অথ, **Account/Voucher মডিউল সম্পূর্ণ** | ✅ শেষ |
 | **২** | ক্যাটালগ: category (গাছ), unit (রূপান্তর), attribute (সাইজ/রঙ), product + variant + অ্যাডমিন CRUD | ✅ শেষ |
-| ৩ | স্টোরফ্রন্ট + কাস্টমার + কার্ট + চেকআউট + অর্ডার (Sale/COGS ভাউচার অটো পোস্ট), ডেলিভারি জোন, ম্যানুয়াল bKash/Nagad রেফারেন্স পেমেন্ট | পরিকল্পিত — [10-storefront-order.md](10-storefront-order.md) |
+| **৩** | স্টোরফ্রন্ট + কাস্টমার + কার্ট + চেকআউট + অর্ডার (Sale/COGS ভাউচার অটো পোস্ট), ডেলিভারি জোন, ম্যানুয়াল bKash/Nagad রেফারেন্স পেমেন্ট | ✅ শেষ — [10-storefront-order.md](10-storefront-order.md) |
 | **৪** | ইনভেনটরি: purchase, stock ledger, stock adjustment, সাপ্লায়ার | ✅ শেষ — [08-purchase.md](08-purchase.md) |
 | ৪.৫ | ক্যাটাগরি/প্রোডাক্ট ছবি আপলোড, Purchase-এ বিক্রয় মূল্য | পরিকল্পিত — [09-media-and-purchase-pricing.md](09-media-and-purchase-pricing.md) |
 | ৫ | পেমেন্ট: COD সেটেলমেন্ট, bKash/গেটওয়ে, রিফান্ড, রিটার্ন | |

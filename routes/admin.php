@@ -18,6 +18,9 @@ use App\Modules\Dashboard\Controllers\DashboardController;
 use App\Modules\Purchase\Controllers\PurchaseController;
 use App\Modules\Purchase\Controllers\StockController;
 use App\Modules\Purchase\Controllers\SupplierController;
+use App\Modules\Sale\Controllers\CustomerController;
+use App\Modules\Sale\Controllers\DeliveryZoneController;
+use App\Modules\Sale\Controllers\OrderController;
 
 // লগইন (গেস্ট)
 Router::get('/admin/login',   [LoginController::class, 'form'],   ['name' => 'admin.login']);
@@ -59,6 +62,21 @@ Router::group(['prefix' => '/admin', 'guard' => 'admin'], function (): void {
     Router::get('/stock/adjustments/{id}/edit', [StockController::class, 'adjustmentEdit'],   ['name' => 'admin.stock.adjustment.edit']);
     Router::get('/stock/returns',               [StockController::class, 'returns'],          ['name' => 'admin.stock.return.index']);
     Router::get('/stock/returns/create',        [StockController::class, 'returnCreate'],     ['name' => 'admin.stock.return.create']);
+
+    // ---------------------------------------------------------------------
+    // বিক্রয় — ডেলিভারি জোন (doc/10-storefront-order.md)
+    // ---------------------------------------------------------------------
+    Router::get('/delivery-zones',           [DeliveryZoneController::class, 'index'],  ['name' => 'admin.deliveryZone.index']);
+    Router::get('/delivery-zones/create',    [DeliveryZoneController::class, 'create'], ['name' => 'admin.deliveryZone.create']);
+    Router::get('/delivery-zones/{id}/edit', [DeliveryZoneController::class, 'edit'],   ['name' => 'admin.deliveryZone.edit']);
+
+    Router::get('/customers',           [CustomerController::class, 'index'],  ['name' => 'admin.customer.index']);
+    Router::get('/customers/create',    [CustomerController::class, 'create'], ['name' => 'admin.customer.create']);
+    Router::get('/customers/{id}/edit', [CustomerController::class, 'edit'],   ['name' => 'admin.customer.edit']);
+
+    Router::get('/orders/pending', [OrderController::class, 'pending'], ['name' => 'admin.order.pending']);
+    Router::get('/orders',         [OrderController::class, 'index'],   ['name' => 'admin.order.index']);
+    Router::get('/orders/{id}',    [OrderController::class, 'show'],    ['name' => 'admin.order.show']);
 
     // ভাউচার
     Router::get('/vouchers',            [VoucherController::class, 'index'], ['name' => 'admin.voucher.index']);

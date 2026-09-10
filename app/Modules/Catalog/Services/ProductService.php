@@ -380,7 +380,8 @@ final class ProductService
      * ফিল্টার সহ প্রোডাক্ট লিস্ট।
      *
      * ফিল্টার: category_id (গাছসহ), q (নাম/SKU), isActive, isFeatured, isNew,
-     *          has_variant, page, per_page
+     *          has_variant, on_sale (অফার চলছে এমন), sort (newest|price_asc|price_desc),
+     *          page, per_page
      *
      * @param  array<string,mixed> $filters
      * @return array{data:array<int,array<string,mixed>>,total:int,page:int,per_page:int}
@@ -392,7 +393,7 @@ final class ProductService
         $perPage = (int) ($filters['per_page'] ?? 25);
         $page    = max(1, (int) ($filters['page'] ?? 1));
 
-        $query = self::searchQuery($filters)->orderBy('sort_order')->orderBy('id', 'DESC');
+        $query = self::applySort(self::searchQuery($filters), (string) ($filters['sort'] ?? ''));
 
         if ($perPage > 0) {
             $query->page($page, min($perPage, 200));
@@ -533,7 +534,30 @@ final class ProductService
             }
         }
 
+        // অফার এখন চলছে এমন প্রোডাক্ট — effectivePrice()/offerRunning() এর একই শর্ত,
+        // SQL এ যাতে pagination-এর total ও ঠিক থাকে (post-filter না)
+        if (!empty($filters['on_sale'])) {
+            $now = time();
+            $query->whereRaw(
+                '(offer_price > 0 AND offer_price < sale_price '
+                . 'AND (offer_start = 0 OR offer_start <= ?) '
+                . 'AND (offer_end = 0 OR offer_end >= ?))',
+                [$now, $now]
+            );
+        }
+
         return $query;
+    }
+
+    /** স্টোরফ্রন্টের সর্ট অপশন — খালি/অচেনা হলে আগের ডিফল্ট (sort_order, id DESC) */
+    private static function applySort(QueryBuilder $query, string $sort): QueryBuilder
+    {
+        return match ($sort) {
+            'price_asc'  => $query->orderBy('sale_price', 'ASC')->orderBy('id', 'DESC'),
+            'price_desc' => $query->orderBy('sale_price', 'DESC')->orderBy('id', 'DESC'),
+            'newest'     => $query->orderBy('id', 'DESC'),
+            default      => $query->orderBy('sort_order')->orderBy('id', 'DESC'),
+        };
     }
 
     /**

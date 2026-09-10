@@ -110,8 +110,8 @@ panacea `ST_CH_*` এর সাবসেট। ভ্যালু কখনো �
 | case | value | সাইন | সোর্স |
 |---|---|---|---|
 | `Purchase` | 1 | `+` | `purchase_items` |
-| `Sale` | 2 | `−` | `order_items` (ফেজ ৫) |
-| `SaleReturn` | 3 | `+` | `order_return_items` (ফেজ ৫) |
+| `Sale` | 2 | `−` | `order_items` — ✅ ফেজ ৩, `OrderService::postShipmentVouchers()`, [10-storefront-order.md](10-storefront-order.md) §৮ |
+| `SaleReturn` | 3 | `+` | `order_items` — ✅ ফেজ ৩; আলাদা `order_return_items` টেবিল হয়নি, একই `order_items` রো রেফার হয় (`orders.status = Returned`) |
 | `PurchaseReturn` | 4 | `−` | `purchase_return_items` |
 | `Opening` | 5 | `+` | `stock_adjustment_items` |
 | `Adjust` | 6 | `+/−` | `stock_adjustment_items` |
@@ -215,7 +215,7 @@ Voucher::create(
 |---|---|---|---|
 | Purchase | Inventory (7) | Supplier ledger | `Purchase` (4) |
 | Purchase Return | Supplier ledger | Inventory (7) | `PurchaseReturn` (5) |
-| Sale (ফেজ ৫) | COGS (15) | Inventory (7) | `CostOfGoodsSold` (14) |
+| Sale — ✅ ফেজ ৩ | COGS (15) | Inventory (7) | `CostOfGoodsSold` (14) |
 | Stock Adjustment — ঘাটতি | Stock Adjustment (16) | Inventory (7) | `StockAdjustment` (15) |
 | Stock Adjustment — বাড়তি / Opening | Inventory (7) | Stock Adjustment (16) | `StockAdjustment` (15) |
 | Supplier payment | Supplier ledger | Cash/Bank | `SupplierPayment` (6) |
