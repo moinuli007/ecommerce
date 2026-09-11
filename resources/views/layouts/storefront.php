@@ -65,7 +65,7 @@ $navCategories  = $navCategories ?? [];
             font-size:.65rem; font-weight:700; min-width:17px; height:17px; border-radius:99px;
             display:grid; place-items:center; padding:0 3px;
         }
-        .track-link { font-size:.82rem; color:var(--muted); }
+        .track-link, .account-link { font-size:.82rem; color:var(--muted); }
 
         main { min-height:60vh; }
 
@@ -83,6 +83,24 @@ $navCategories  = $navCategories ?? [];
         .msg-s { background:#e8f6ec; color:#14532d; }
         .msg-w { background:#fdf3e0; color:#7c4a03; }
         .msg-i { background:#e8f0fd; color:#1e3a8a; }
+
+        /* বটম-রাইট টোস্ট — সাধারণ ইনলাইন .msg এর চেয়ে বেশি ভিজিবল হওয়া দরকার
+           (বড় প্যাডিং, বোল্ড টেক্সট, আইকন, কালার-কোডেড বর্ডার, স্লাইড-ইন অ্যানিমেশন) */
+        .toast-item {
+            display:flex; align-items:flex-start; gap:.6rem; margin:0; padding:.9rem 1.1rem;
+            border-radius:10px; font-size:.92rem; font-weight:600; line-height:1.4;
+            border-left:4px solid transparent;
+            box-shadow:0 10px 28px rgba(16,24,40,.2), 0 2px 8px rgba(16,24,40,.1);
+            animation:toast-in .25s ease-out;
+        }
+        .toast-item.msg-s { border-left-color:#14532d; }
+        .toast-item.msg-e { border-left-color:#8c1c1c; }
+        .toast-item.msg-w { border-left-color:#7c4a03; }
+        .toast-item.msg-i { border-left-color:#1e3a8a; }
+        .toast-item .toast-icon { flex-shrink:0; margin-top:.05rem; }
+        .toast-item.toast-out { animation:toast-out .2s ease-in forwards; }
+        @keyframes toast-in { from { opacity:0; transform:translateY(10px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes toast-out { to { opacity:0; transform:translateY(6px) scale(.97); } }
 
         .wrap { max-width:1200px; margin:0 auto; padding:0 1.5rem; }
         .muted { color:var(--muted); }
@@ -110,7 +128,6 @@ $navCategories  = $navCategories ?? [];
             margin-bottom:.6rem;
         }
         .p-card .thumb img { width:100%; height:100%; object-fit:cover; }
-        .p-card .thumb .noimg { width:100%; height:100%; display:grid; place-items:center; color:var(--muted); font-size:.78rem; }
         .p-card .badge {
             position:absolute; top:.5rem; left:.5rem; background:var(--accent); color:#fff;
             font-size:.68rem; font-weight:800; padding:.2rem .5rem; border-radius:4px; text-transform:uppercase;
@@ -142,6 +159,12 @@ $navCategories  = $navCategories ?? [];
     </nav>
     <div class="site-actions">
         <a class="track-link" href="<?= View::e($appUrl) ?>/orders/track">Track Order</a>
+        <?php if ($authCustomer !== []): ?>
+            <a class="account-link" href="<?= View::e($appUrl) ?>/profile">Hi, <?= View::e($authCustomer['name']) ?></a>
+            <a class="account-link" href="<?= View::e($appUrl) ?>/logout">Logout</a>
+        <?php else: ?>
+            <a class="account-link" href="<?= View::e($appUrl) ?>/login">Login</a>
+        <?php endif; ?>
         <a class="cart-link" href="<?= View::e($appUrl) ?>/cart">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -187,15 +210,19 @@ $navCategories  = $navCategories ?? [];
 </footer>
 
 <script>
-window.STOREFRONT_API = '<?= View::e($appUrl) ?>/api/v1/storefront';
+window.API_ROOT       = '<?= View::e($appUrl) ?>/api/v1';
+window.STOREFRONT_API = window.API_ROOT + '/storefront';
+window.AUTH_API       = window.API_ROOT + '/auth';
 
-window.storefrontApi = async function (path, body, method) {
+// storefrontApi()/accountApi() দুটোই এর পাতলা wrapper — শুধু base URL আলাদা
+// (doc/11-customer-account.md সিদ্ধান্ত C-09)
+window.callApi = async function (base, path, body, method) {
     method = method || (body ? 'POST' : 'GET');
 
     let data;
 
     try {
-        const response = await fetch(window.STOREFRONT_API + path, {
+        const response = await fetch(base + path, {
             method:      method,
             headers:     { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
@@ -213,6 +240,14 @@ window.storefrontApi = async function (path, body, method) {
     return data.status === 1 ? data : null;
 };
 
+window.storefrontApi = function (path, body, method) {
+    return window.callApi(window.STOREFRONT_API, path, body, method);
+};
+
+window.accountApi = function (path, body, method) {
+    return window.callApi(window.AUTH_API, path, body, method);
+};
+
 window.storeToast = function (type, text) {
     let box = document.getElementById('store-toast-box');
 
@@ -220,17 +255,35 @@ window.storeToast = function (type, text) {
         box = document.createElement('div');
         box.id = 'store-toast-box';
         box.style.cssText = 'position:fixed;right:1rem;bottom:1rem;z-index:60;display:flex;'
-                          + 'flex-direction:column;gap:.5rem;max-width:min(360px,90vw)';
+                          + 'flex-direction:column;gap:.6rem;max-width:min(380px,90vw)';
         document.body.appendChild(box);
     }
 
+    const icons = {
+        s: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+        e: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>',
+        w: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+        i: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>'
+    };
+
     const item = document.createElement('div');
-    item.className = 'msg msg-' + type;
-    item.style.cssText = 'margin:0;box-shadow:0 2px 10px rgba(0,0,0,.15)';
-    item.textContent = text;
+    item.className = 'msg msg-' + type + ' toast-item';
+
+    const icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    icon.innerHTML = icons[type] || icons.i;
+
+    const label = document.createElement('span');
+    label.textContent = text;
+
+    item.appendChild(icon);
+    item.appendChild(label);
     box.appendChild(item);
 
-    setTimeout(function () { item.remove(); }, 4500);
+    setTimeout(function () {
+        item.classList.add('toast-out');
+        setTimeout(function () { item.remove(); }, 200);
+    }, 4500);
 };
 
 window.setCartBadge = function (count) {

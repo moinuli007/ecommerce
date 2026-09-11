@@ -32,11 +32,15 @@ use App\Modules\Sale\Api\PaymentApi;
 Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
 
     // ---------------------------------------------------------------------
-    // অথ
+    // অথ (doc/11-customer-account.md §৭)
     // ---------------------------------------------------------------------
-    Router::post('/auth/login',  [AuthApi::class, 'login'],  ['name' => 'api.auth.login']);
-    Router::post('/auth/logout', [AuthApi::class, 'logout'], ['guard' => 'auth', 'name' => 'api.auth.logout']);
-    Router::get('/auth/me',      [AuthApi::class, 'me'],     ['guard' => 'auth', 'name' => 'api.auth.me']);
+    Router::post('/auth/register', [AuthApi::class, 'register'], ['name' => 'api.auth.register']);
+    Router::post('/auth/login',    [AuthApi::class, 'login'],    ['name' => 'api.auth.login']);
+    Router::post('/auth/logout',   [AuthApi::class, 'logout'],   ['guard' => 'auth', 'name' => 'api.auth.logout']);
+    Router::get('/auth/me',        [AuthApi::class, 'me'],       ['guard' => 'auth', 'name' => 'api.auth.me']);
+    Router::put('/auth/profile',   [AuthApi::class, 'updateProfile'],  ['guard' => 'auth', 'name' => 'api.auth.profile']);
+    Router::put('/auth/password',  [AuthApi::class, 'changePassword'], ['guard' => 'auth', 'name' => 'api.auth.password']);
+    Router::delete('/auth/account', [AuthApi::class, 'deleteAccount'], ['guard' => 'customer', 'name' => 'api.auth.deleteAccount']);
 
     // ---------------------------------------------------------------------
     // স্টোরফ্রন্ট — ক্যাটালগ ব্রাউজিং (guard: guest, doc/10-storefront-order.md §৬)

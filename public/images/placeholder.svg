@@ -1,0 +1,16 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No photo yet">
+    <defs>
+        <pattern id="stripes" width="26" height="26" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <rect width="26" height="26" fill="#f7f7f8"/>
+            <rect width="10" height="26" fill="#eeeeef"/>
+        </pattern>
+    </defs>
+
+    <rect width="400" height="400" fill="url(#stripes)"/>
+
+    <g transform="translate(200 200)" opacity=".8" fill="none" stroke="#9aa0ab" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="-72" y="-58" width="144" height="116" rx="16" fill="#ffffff"/>
+        <circle cx="-33" cy="-23" r="13"/>
+        <path d="M-72 36 L-26 -9 L8 25 L32 3 L72 42"/>
+    </g>
+</svg>

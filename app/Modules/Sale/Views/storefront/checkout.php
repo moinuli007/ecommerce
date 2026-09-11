@@ -20,12 +20,15 @@ use App\Core\View;
     .field-row { display:flex; gap:.75rem; }
     .field-row .field { flex:1; }
 
-    .option-card {
+    /* label.option-card (না শুধু .option-card) — ".field label" (উপরে, লাইন ১৬) এর
+       display:block/margin-bottom নিয়ম নাহলে specificity তে জিতে যেত (দুটোই .field
+       এর ভেতরের <label>), ফলে .option-card আসলে কখনো flex row হতোই না */
+    .field label.option-card {
         display:flex; align-items:center; gap:.65rem; padding:.8rem .9rem; border:1px solid var(--line);
         border-radius:8px; margin-bottom:.6rem; cursor:pointer;
     }
     .option-card.selected { border-color:var(--brand); background:var(--bg-soft); }
-    .option-card .meta { flex:1; }
+    .option-card .meta { flex:1; display:flex; flex-direction:column; gap:.15rem; }
     .option-card .name { font-weight:600; font-size:.88rem; }
     .option-card .sub { font-size:.78rem; color:var(--muted); }
     .option-card .fee { font-weight:700; font-size:.88rem; }

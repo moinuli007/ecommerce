@@ -101,6 +101,12 @@ final class CustomerService
      * বানায়। বিদ্যমান কাস্টমারের নাম/ইমেইল এখানে ওভাররাইট হয় না — কারও
      * প্রোফাইল আরেকজনের গেস্ট চেকআউটে ভুল করে বদলে যাওয়া ঠেকাতে।
      *
+     * `user_id` দেওয়া থাকলে ও বিদ্যমান রো এখনো গেস্ট (`user_id = 0`) হলে
+     * এখানেই লিংক করে দেয় — রেজিস্ট্রেশনের সময় পুরোনো গেস্ট-চেকআউট
+     * কাস্টমারের সাথে টাই হওয়ার পথ এটাই (doc/11-customer-account.md §২,
+     * সিদ্ধান্ত C-01)। গেস্ট চেকআউট কল সাইটে `user_id` পাঠানো হয় না বলে
+     * ওই ব্যবহারে আচরণ অপরিবর্তিত থাকে।
+     *
      * @param  array<string,mixed> $data phone, name, email?, user_id?
      * @return array<string,mixed>
      */
@@ -113,8 +119,15 @@ final class CustomerService
         }
 
         $existing = Customer::byPhone($phone);
+        $userId   = (int) ($data['user_id'] ?? 0);
 
         if ($existing !== []) {
+            if ($userId > 0 && (int) $existing['user_id'] === 0) {
+                Customer::updateById((int) $existing['id'], ['user_id' => $userId]);
+
+                return Customer::find((int) $existing['id']);
+            }
+
             return $existing;
         }
 

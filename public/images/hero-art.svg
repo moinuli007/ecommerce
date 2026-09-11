@@ -1,0 +1,48 @@
+<svg viewBox="0 0 520 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Shopping bag illustration">
+    <defs>
+        <linearGradient id="bagFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset="1" stop-color="#ececee"/>
+        </linearGradient>
+        <linearGradient id="foldFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e2e2e5"/>
+            <stop offset="1" stop-color="#d7d7db"/>
+        </linearGradient>
+    </defs>
+
+    <circle cx="330" cy="210" r="200" fill="#ffffff" opacity=".06"/>
+    <circle cx="150" cy="330" r="130" fill="#ffffff" opacity=".045"/>
+
+    <g opacity=".55">
+        <circle cx="90" cy="120" r="5" fill="#ffffff"/>
+        <circle cx="440" cy="360" r="4" fill="#ffffff"/>
+        <circle cx="450" cy="140" r="3.5" fill="#d0341f"/>
+        <circle cx="70" cy="300" r="3" fill="#d0341f"/>
+        <circle cx="420" cy="230" r="3" fill="#ffffff"/>
+        <circle cx="120" cy="380" r="3.5" fill="#ffffff"/>
+    </g>
+
+    <g stroke="#d0341f" stroke-width="3" stroke-linecap="round" opacity=".9">
+        <path d="M60 90 L60 106 M52 98 L68 98"/>
+        <path d="M470 260 L470 274 M463 267 L477 267"/>
+    </g>
+    <path d="M395 90 l6 14 14 6 -14 6 -6 14 -6 -14 -14 -6 14 -6 z" fill="#ffffff" opacity=".85"/>
+
+    <path d="M175 235 C175 165 355 165 355 235" fill="none" stroke="#d0341f" stroke-width="11" stroke-linecap="round"/>
+
+    <path d="M150 240 L380 240 L400 420 C401 435 390 448 374 448 L156 448 C140 448 129 435 130 420 Z"
+          fill="url(#bagFill)" stroke="#1c1c1e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M150 240 L380 240 L385 268 L145 268 Z" fill="url(#foldFill)" stroke="#1c1c1e" stroke-width="3" stroke-linejoin="round"/>
+
+    <g transform="translate(233 300) rotate(-8)">
+        <rect x="0" y="0" width="70" height="86" rx="8" fill="#ffffff" stroke="#1c1c1e" stroke-width="3"/>
+        <rect x="12" y="18" width="46" height="8" rx="4" fill="#d0341f"/>
+        <rect x="12" y="34" width="30" height="6" rx="3" fill="#e2e2e5"/>
+        <circle cx="35" cy="66" r="12" fill="none" stroke="#d0341f" stroke-width="3"/>
+    </g>
+
+    <g opacity=".9">
+        <circle cx="255" cy="200" r="3.5" fill="#d0341f"/>
+        <circle cx="300" cy="195" r="2.5" fill="#ffffff"/>
+    </g>
+</svg>

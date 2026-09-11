@@ -28,9 +28,18 @@ $mainImages    = $generalImages !== [] ? $generalImages : $p['images'];
     .pdp { display:grid; grid-template-columns:1fr 1fr; gap:2.5rem; padding:2rem 0 3rem; }
     @media (max-width:800px) { .pdp { grid-template-columns:1fr; } }
 
-    .gallery-main { aspect-ratio:1/1; background:var(--bg-soft); border-radius:10px; overflow:hidden; margin-bottom:.6rem; }
+    .gallery-main {
+        position:relative; aspect-ratio:1/1; background:var(--bg-soft); border-radius:10px;
+        overflow:hidden; margin-bottom:.6rem; cursor:zoom-in;
+    }
     .gallery-main img { width:100%; height:100%; object-fit:cover; }
     .gallery-main .noimg { width:100%; height:100%; display:grid; place-items:center; color:var(--muted); }
+    .zoom-lens {
+        position:absolute; width:180px; height:180px; border-radius:50%; pointer-events:none;
+        border:3px solid #fff; box-shadow:0 4px 18px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.08);
+        background-repeat:no-repeat; background-color:var(--bg-soft); display:none; z-index:5;
+    }
+    @media (max-width:800px) { .zoom-lens { display:none !important; } }
     .gallery-thumbs { display:flex; gap:.5rem; flex-wrap:wrap; }
     .gallery-thumbs img {
         width:60px; height:60px; object-fit:cover; border-radius:6px; cursor:pointer;
@@ -81,6 +90,7 @@ $mainImages    = $generalImages !== [] ? $generalImages : $p['images'];
             <div class="gallery-main" id="gallery-main">
                 <?php if ($mainImages !== []): ?>
                     <img id="gallery-main-img" src="<?= View::e($appUrl . $mainImages[0]['path']) ?>" alt="<?= View::e($p['name']) ?>">
+                    <div class="zoom-lens" id="zoom-lens"></div>
                 <?php else: ?>
                     <div class="noimg">No image</div>
                 <?php endif; ?>
@@ -188,6 +198,34 @@ $mainImages    = $generalImages !== [] ? $generalImages : $p['images'];
         el.classList.add('active');
     };
 
+    // হোভার ম্যাগনিফায়ার — গোল লেন্স কার্সর অনুসরণ করে জুম করা অংশ দেখায় (doc/10-storefront-order.md §১১ O-18)
+    (function initZoomLens() {
+        var stage = document.getElementById('gallery-main');
+        var lens  = document.getElementById('zoom-lens');
+        var ZOOM  = 2.2;
+
+        if (!stage || !lens) { return; }
+
+        stage.addEventListener('mousemove', function (e) {
+            var img = document.getElementById('gallery-main-img');
+            if (!img) { lens.style.display = 'none'; return; }
+
+            var rect = stage.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var size = lens.offsetWidth;
+
+            lens.style.display = 'block';
+            lens.style.left = (x - size / 2) + 'px';
+            lens.style.top = (y - size / 2) + 'px';
+            lens.style.backgroundImage = 'url("' + img.src + '")';
+            lens.style.backgroundSize = (rect.width * ZOOM) + 'px ' + (rect.height * ZOOM) + 'px';
+            lens.style.backgroundPosition = (-(x * ZOOM - size / 2)) + 'px ' + (-(y * ZOOM - size / 2)) + 'px';
+        });
+
+        stage.addEventListener('mouseleave', function () { lens.style.display = 'none'; });
+    })();
+
     window.stepQty = function (delta) {
         var input = document.getElementById('qty');
         var next = Math.max(1, Math.min(10, parseInt(input.value, 10) + delta));
@@ -269,8 +307,10 @@ $mainImages    = $generalImages !== [] ? $generalImages : $p['images'];
     }
 
     document.getElementById('btn-add-cart').addEventListener('click', async function () {
+        // সার্ভার রেসপন্সের 'm' মেসেজ storefrontApi() নিজেই toast করে দেয় (layout দেখুন) —
+        // এখানে আবার storeToast() কল করলে "Added to cart." দুইবার দেখাতো (doc/10-storefront-order.md §১১ O-17)
         var result = await addToCart();
-        if (result) { window.setCartBadge(result.count); window.storeToast('s', 'Added to cart.'); }
+        if (result) { window.setCartBadge(result.count); }
     });
 
     document.getElementById('btn-buy-now').addEventListener('click', async function () {

@@ -20,11 +20,8 @@ use App\Core\View;
         <?php if (empty($product['in_stock'])): ?>
             <span class="badge out" style="left:auto;right:.5rem">Sold Out</span>
         <?php endif; ?>
-        <?php if (($product['image'] ?? '') !== ''): ?>
-            <img src="<?= View::e($appUrl . $product['image']) ?>" alt="<?= View::e($product['name']) ?>" loading="lazy">
-        <?php else: ?>
-            <div class="noimg">No image</div>
-        <?php endif; ?>
+        <img src="<?= View::e($appUrl . (($product['image'] ?? '') !== '' ? $product['image'] : '/images/placeholder.svg')) ?>"
+             alt="<?= View::e($product['name']) ?>" loading="lazy">
     </div>
     <h3 class="name"><?= View::e($product['name']) ?></h3>
     <div class="price-block">

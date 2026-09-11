@@ -2,6 +2,8 @@
 
 namespace App\Modules\Sale\Controllers;
 
+use App\Core\Auth;
+use App\Core\Message;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\View;
@@ -136,9 +138,20 @@ final class StorefrontController
         ]));
     }
 
-    /** @return array<string,mixed> সব পেজে লাগে — নেভ ক্যাটাগরি, কার্ট কাউন্ট */
-    private static function common(): array
+    /**
+     * সব পেজে লাগে — নেভ ক্যাটাগরি, কার্ট কাউন্ট, লগইন কাস্টমার (নেভের
+     * Account লিংক এখান থেকেই রেন্ডার হয়, doc/11-customer-account.md §৮)।
+     * `AccountController` ও এটা পুনর্ব্যবহার করে বলে public।
+     *
+     * @return array<string,mixed>
+     */
+    public static function common(): array
     {
+        // সেশন-ফ্ল্যাশ করা মেসেজ (রিডাইরেক্টের পরে দেখানোর জন্য, যেমন লগআউট)
+        // এখানেই ধরে ফেলা লাগে — নিচের Api কলগুলো নিজেরাই Response::payload()
+        // এর ভেতর Message::flush() করে, তাই পরে ডাকলে ততক্ষণে কিউ খালি পেত।
+        $messages = Message::flush();
+
         Response::reset();
         $tree = CategoryApi::publicTree();
 
@@ -149,6 +162,8 @@ final class StorefrontController
             'navCategories' => $tree['tree'] ?? [],
             'navFeatured'   => $tree['featured'] ?? [],
             'cartCount'     => (int) ($cart['count'] ?? 0),
+            'authCustomer'  => Auth::isCustomer() ? Auth::user() : [],
+            'messages'      => $messages,
         ];
     }
 }
