@@ -3,6 +3,7 @@
 namespace App\Modules\Purchase\Services;
 
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Core\Utility;
 use App\Enum\AutoLedger;
 use App\Enum\StockChangeType;
@@ -81,7 +82,7 @@ final class PurchaseReturnService
             }
 
             $subTotal = round($subTotal, 4);
-            DB::update('purchase_returns', ['sub_total' => $subTotal, 'updated_at' => time()], ['id' => $returnId]);
+            DB::update('purchase_returns', ['sub_total' => $subTotal, 'updated_at' => RequestTime::now()], ['id' => $returnId]);
 
             if ($subTotal > 0) {
                 Voucher::create(
@@ -318,7 +319,7 @@ final class PurchaseReturnService
 
         $meta = [
             'note'        => mb_substr(trim((string) ($data['note'] ?? '')), 0, 255),
-            'return_date' => Utility::toTime((string) ($data['return_date'] ?? ''), time()),
+            'return_date' => Utility::toTime((string) ($data['return_date'] ?? ''), RequestTime::now()),
         ];
 
         return [$purchase, $supplier, $items, $meta];

@@ -4,6 +4,7 @@ namespace App\Modules\Purchase\Services;
 
 use App\Core\Auth;
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Core\Utility;
 use App\Enum\AutoLedger;
 use App\Enum\StockChangeType;
@@ -70,7 +71,7 @@ final class PurchaseService
             DB::update('purchases', [
                 'sub_total'  => $subTotal,
                 'total'      => $total,
-                'updated_at' => time(),
+                'updated_at' => RequestTime::now(),
             ], ['id' => $purchaseId]);
 
             self::postVoucher($purchaseId, $supplier, $total, $meta['invoice_date'], $header['code']);
@@ -115,7 +116,7 @@ final class PurchaseService
                 'po_no'               => $meta['po_no'],
                 'discount'            => $meta['discount'],
                 'note'                => $meta['note'],
-                'updated_at'          => time(),
+                'updated_at'          => RequestTime::now(),
                 'updated_by'          => Auth::id(),
             ], ['id' => $id]);
 
@@ -352,7 +353,7 @@ final class PurchaseService
             'po_no'               => mb_substr(trim((string) ($data['po_no'] ?? '')), 0, 60),
             'note'                => mb_substr(trim((string) ($data['note'] ?? '')), 0, 255),
             'discount'            => $discount,
-            'invoice_date'       => Utility::toTime((string) ($data['invoice_date'] ?? ''), time()),
+            'invoice_date'       => Utility::toTime((string) ($data['invoice_date'] ?? ''), RequestTime::now()),
         ];
 
         return [$supplier, $items, $meta];

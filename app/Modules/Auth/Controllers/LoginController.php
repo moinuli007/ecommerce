@@ -25,6 +25,13 @@ final class LoginController
             self::redirect(self::safeNext());
         }
 
+        // ইনঅ্যাক্টিভিটির কারণে আগের admin সেশন এইমাত্র এক্সপায়ার হয়ে থাকলে
+        // ("Please log in to continue." জেনেরিক মেসেজের বদলে) একটা স্পষ্ট কারণ
+        // দেখানো — doc/13-auth-and-user-management.md §৩
+        if (Auth::adminSessionExpired()) {
+            Message::push(Message::WARNING, 'Your session has expired due to 20 minutes of inactivity. Please log in again.');
+        }
+
         return View::render('auth/login', [
             'title'    => 'Admin Login',
             'next'     => self::safeNext(),

@@ -3,6 +3,7 @@
 namespace App\Modules\Sale\Services;
 
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Enum\TransactionType;
 use App\Enum\VoucherType;
 use App\Modules\Account\Services\LedgerAccounts;
@@ -85,7 +86,7 @@ final class CustomerService
                         $ledgerId,
                         $newOpening,
                         TransactionType::Debit, // কাস্টমারের কাছে আমরা পাব
-                        time(),
+                        RequestTime::now(),
                         (string) $customerId,
                         'Opening balance'
                     );

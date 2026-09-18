@@ -27,6 +27,7 @@ $navCategories  = $navCategories ?? [];
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= View::e($title ?? '') ?><?= ($title ?? '') !== '' ? ' — ' : '' ?><?= View::e($appName ?? '') ?></title>
+    <link rel="icon" type="image/jpeg" href="<?= View::e($appUrl) ?>/images/riylon-favicon.jpg">
     <style>
         :root {
             --bg:#fff; --bg-soft:#f7f7f8; --fg:#17181a; --muted:#6b7280; --line:#e7e7ea;
@@ -54,7 +55,8 @@ $navCategories  = $navCategories ?? [];
             display:flex; align-items:center; gap:1.5rem; padding:1rem 1.5rem;
             border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:20;
         }
-        .site-logo { font-size:1.25rem; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
+        .site-logo { display:flex; align-items:center; gap:.55rem; font-size:1.25rem; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
+        .site-logo img { height:34px; width:34px; border-radius:50%; object-fit:cover; }
         nav.site-nav { display:flex; gap:1.25rem; flex:1; overflow-x:auto; }
         nav.site-nav a { font-size:.88rem; font-weight:600; color:var(--fg); white-space:nowrap; padding:.3rem 0; }
         nav.site-nav a:hover { color:var(--accent); }
@@ -144,13 +146,16 @@ $navCategories  = $navCategories ?? [];
 </head>
 <body>
 
-<div class="promo">
+<!-- <div class="promo">
     <span>Cash on Delivery All Over Bangladesh</span>
     <span>Free Delivery on Orders Over &#2547;3,000 (Inside Dhaka)</span>
-</div>
+</div> -->
 
 <header class="site">
-    <a class="site-logo" href="<?= View::e($appUrl) ?>/"><?= View::e($appName ?? 'Store') ?></a>
+    <a class="site-logo" href="<?= View::e($appUrl) ?>/">
+        <img src="<?= View::e($appUrl) ?>/images/riylon-logo.jpg" alt="">
+        <?= View::e($appName ?? 'Store') ?>
+    </a>
     <nav class="site-nav">
         <a href="<?= View::e($appUrl) ?>/collections/all">All Products</a>
         <?php foreach (array_slice($navCategories, 0, 6) as $cat): ?>

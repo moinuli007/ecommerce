@@ -25,7 +25,7 @@ Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
 | অপশন | মানে |
 |---|---|
 | `prefix` | গ্রুপের URL প্রিফিক্স (নেস্ট করলে জোড়া লাগে) |
-| `guard` | `guest` · `auth` · `admin` · `customer` (ডিফল্ট `guest`) |
+| `guard` | `guest` · `auth` · `admin` · `super_admin` · `customer` (ডিফল্ট `guest`) — বিস্তারিত [13-auth-and-user-management.md](13-auth-and-user-management.md) |
 | `json` | `true` হলে হ্যান্ডলারের রিটার্ন array JSON হয়ে যাবে |
 | `name` | `Router::url('api.voucher.show', ['id' => 7])` এর জন্য |
 
@@ -51,7 +51,12 @@ Router::get('/vouchers/{id}',      ...);   // ✅ পরে — নাহলে 
 | `guest` | চলবে | চলবে |
 | `auth` | 401 | চলবে |
 | `admin` | 401 | 403 |
+| `super_admin` | 401 | 403 (Admin/staff হলেও 403 — শুধু Super Admin) |
 | `customer` | 401 | 403 |
+
+`admin` আর `customer` guard আলাদা $_SESSION স্লট থেকে রেজলভ হয় (App\Core\Auth::area())
+— একই ব্রাউজারে admin আর customer একসাথে লগইন থাকতে পারে, বিস্তারিত
+[13-auth-and-user-management.md](13-auth-and-user-management.md)।
 
 JSON রাউটে 401/403 রেসপন্স `status: 0` + `m` সহ যায়।
 

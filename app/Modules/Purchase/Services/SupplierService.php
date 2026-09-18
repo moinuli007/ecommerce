@@ -3,6 +3,7 @@
 namespace App\Modules\Purchase\Services;
 
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Enum\TransactionType;
 use App\Enum\VoucherType;
 use App\Modules\Account\Services\CodeGenerator;
@@ -76,7 +77,7 @@ final class SupplierService
                         $ledgerId,
                         $newOpening,
                         TransactionType::Credit, // সাপ্লায়ারকে আমরা দেব
-                        time(),
+                        RequestTime::now(),
                         (string) $supplierId,
                         'Opening balance'
                     );

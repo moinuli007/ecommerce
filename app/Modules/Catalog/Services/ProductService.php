@@ -4,6 +4,7 @@ namespace App\Modules\Catalog\Services;
 
 use App\Core\DB;
 use App\Core\QueryBuilder;
+use App\Core\RequestTime;
 use App\Core\Slug;
 use App\Core\Upload;
 use App\Core\Utility;
@@ -333,7 +334,7 @@ final class ProductService
     /** @param array<string,mixed> $product */
     public static function offerRunning(array $product, ?int $now = null): bool
     {
-        $now   = $now ?? time();
+        $now   = $now ?? RequestTime::now();
         $start = (int) ($product['offer_start'] ?? 0);
         $end   = (int) ($product['offer_end'] ?? 0);
 
@@ -537,7 +538,7 @@ final class ProductService
         // অফার এখন চলছে এমন প্রোডাক্ট — effectivePrice()/offerRunning() এর একই শর্ত,
         // SQL এ যাতে pagination-এর total ও ঠিক থাকে (post-filter না)
         if (!empty($filters['on_sale'])) {
-            $now = time();
+            $now = RequestTime::now();
             $query->whereRaw(
                 '(offer_price > 0 AND offer_price < sale_price '
                 . 'AND (offer_start = 0 OR offer_start <= ?) '

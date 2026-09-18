@@ -21,8 +21,9 @@ CREATE TABLE IF NOT EXISTS `users` (
   `name`        VARCHAR(150)    NOT NULL,
   `email`       VARCHAR(150)        NULL,
   `phone`       VARCHAR(30)         NULL,
-  `password`    VARCHAR(255)        NULL COMMENT 'password_hash(), গেস্ট কাস্টমারের জন্য NULL',
-  `type`        TINYINT         NOT NULL DEFAULT 3 COMMENT '1=super_admin, 2=staff, 3=customer',
+  `password`      VARCHAR(255)        NULL COMMENT 'App\\Core\\Password::hash($plain, password_salt), গেস্ট কাস্টমারের জন্য NULL',
+  `password_salt` CHAR(32)            NULL COMMENT 'random, App\\Core\\Password::salt() — password হ্যাশের দ্বিতীয় ভেরিয়েবল, doc/13',
+  `type`        TINYINT         NOT NULL DEFAULT 3 COMMENT '1=super_admin, 2=staff(admin), 3=customer',
   `avatar`      VARCHAR(255)        NULL,
   `last_login`  INT UNSIGNED    NOT NULL DEFAULT 0,
   `isActive`    TINYINT         NOT NULL DEFAULT 1,
@@ -35,6 +36,14 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `uq_users_phone` (`phone`),
   KEY `ix_users_type` (`type`, `isActive`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- আগে থেকে ইনস্টল করা DB-তে `users` টেবিল ইতিমধ্যে ছিল বলে উপরের
+-- CREATE TABLE IF NOT EXISTS কলামটা যোগ করবে না — MySQL এ
+-- "ALTER TABLE ... ADD COLUMN IF NOT EXISTS" বলে কিছু নাই (শুধু
+-- ADD INDEX/DROP COLUMN এ IF (NOT) EXISTS চলে, ADD COLUMN এ না),
+-- তাই এই মাইগ্রেশনটা database/install.php এ PHP দিয়ে idempotent-ভাবে
+-- করা হয়েছে (information_schema চেক করে) — দেখুন সেই ফাইলের
+-- migrateUsersPasswordSaltColumn()।
 
 -- -----------------------------------------------------------------------------
 -- api_tokens — Bearer টোকেন (মোবাইল/এক্সটার্নাল ক্লায়েন্ট)

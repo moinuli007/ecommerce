@@ -10,16 +10,26 @@ use App\Core\View;
 ?>
 <style>
     .hero {
-        background:linear-gradient(135deg,#1c1c1e,#3a3a3d); color:#fff; padding:3.5rem 1.5rem;
-        display:flex; align-items:center; justify-content:center; gap:3rem; overflow:hidden;
+        position:relative; background:linear-gradient(135deg,#1c1c1e,#3a3a3d); color:#fff;
+        padding:4.5rem 1.5rem; min-height:440px; display:flex; align-items:center; overflow:hidden;
     }
-    .hero-text { max-width:440px; }
+    .hero-bg {
+        position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0;
+    }
+    .hero-overlay {
+        position:absolute; inset:0; z-index:1;
+        background:linear-gradient(90deg, rgba(6,6,8,.30) 0%, rgba(6,6,8,.12) 35%, rgba(6,6,8,0) 65%);
+    }
+    .hero-text {
+        position:relative; z-index:2; max-width:460px;
+        text-shadow:0 2px 6px rgba(0,0,0,.85), 0 1px 18px rgba(0,0,0,.6);
+    }
     .hero h1 { font-size:2rem; margin:0 0 .6rem; font-weight:800; }
-    .hero p { margin:0 0 1.5rem; opacity:.85; font-size:.95rem; }
-    .hero-art { width:280px; flex-shrink:0; }
+    .hero p { margin:0 0 1.5rem; opacity:.95; font-size:.95rem; }
     @media (max-width:760px) {
-        .hero { flex-direction:column; text-align:center; padding-top:3rem; }
-        .hero-art { width:180px; order:-1; }
+        .hero { text-align:center; min-height:380px; padding-top:3.5rem; }
+        .hero-overlay { background:linear-gradient(180deg, rgba(6,6,8,.1) 0%, rgba(6,6,8,.5) 78%); }
+        .hero-text { max-width:100%; }
     }
 
     .perks { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; padding:1.75rem 0; border-bottom:1px solid var(--line); }
@@ -48,12 +58,13 @@ use App\Core\View;
 </style>
 
 <section class="hero">
+    <img class="hero-bg" src="<?= View::e($appUrl) ?>/images/riylon-hero-banner.jpg" alt="">
+    <div class="hero-overlay"></div>
     <div class="hero-text">
         <h1><?= View::e($appName ?? 'Welcome') ?></h1>
-        <p>Quality fashion, delivered fast across Bangladesh — Cash on Delivery available.</p>
-        <a class="btn accent" href="<?= View::e($appUrl) ?>/collections/all">Shop All Products</a>
+        <p>Timeless style. Premium comfort. Shop the cable-knit quarter-zip sweater — soft, durable, and a perfect fit for everyone. Cash on Delivery available across Bangladesh.</p>
+        <a class="btn accent" href="<?= View::e($appUrl) ?>/collections/winter">Shop Quarter-Zip Sweaters</a>
     </div>
-    <img class="hero-art" src="<?= View::e($appUrl) ?>/images/hero-art.svg" alt="" aria-hidden="true">
 </section>
 
 <div class="wrap">

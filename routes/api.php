@@ -14,6 +14,7 @@ use App\Core\Router;
 use App\Modules\Account\Api\LedgerApi;
 use App\Modules\Account\Api\VoucherApi;
 use App\Modules\Auth\Api\AuthApi;
+use App\Modules\Auth\Api\UserApi;
 use App\Modules\Catalog\Api\AttributeApi;
 use App\Modules\Catalog\Api\CategoryApi;
 use App\Modules\Catalog\Api\ProductApi;
@@ -74,6 +75,25 @@ Router::group(['prefix' => '/api/v1', 'json' => true], function (): void {
         // ড্যাশবোর্ড
         // -----------------------------------------------------------------
         Router::get('/dashboard', [DashboardApi::class, 'index'], ['name' => 'api.dashboard']);
+
+        // -----------------------------------------------------------------
+        // নিজের পাসওয়ার্ড বদল — যেকোনো লগইন করা অ্যাডমিন (Super Admin/Admin)।
+        // `/users/{id}/...` এর আগে বসানো, নাহলে {id} প্যাটার্ন "me" কেই
+        // ম্যাচ করে ফেলত (স্থির পাথ আগে কনভেনশন, doc/13 §৪)
+        // -----------------------------------------------------------------
+        Router::put('/users/me/password', [UserApi::class, 'changeOwnPassword'], ['name' => 'api.user.selfPassword']);
+
+        // -----------------------------------------------------------------
+        // অ্যাডমিন ইউজার ম্যানেজমেন্ট — শুধু Super Admin (doc/13 §৪)
+        // -----------------------------------------------------------------
+        Router::group(['guard' => 'super_admin'], function (): void {
+            Router::get('/users',              [UserApi::class, 'index'],         ['name' => 'api.user.index']);
+            Router::get('/users/{id}',         [UserApi::class, 'show'],          ['name' => 'api.user.show']);
+            Router::post('/users',             [UserApi::class, 'store'],         ['name' => 'api.user.store']);
+            Router::put('/users/{id}',         [UserApi::class, 'update'],        ['name' => 'api.user.update']);
+            Router::delete('/users/{id}',      [UserApi::class, 'destroy'],       ['name' => 'api.user.destroy']);
+            Router::put('/users/{id}/password', [UserApi::class, 'resetPassword'], ['name' => 'api.user.resetPassword']);
+        });
 
         Router::get('/vouchers',              [VoucherApi::class, 'index'],       ['name' => 'api.voucher.index']);
         Router::get('/vouchers/form-data',    [VoucherApi::class, 'formData'],    ['name' => 'api.voucher.form']);

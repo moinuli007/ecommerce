@@ -3,6 +3,7 @@
 namespace App\Modules\Account\Services;
 
 use App\Core\DB;
+use App\Core\RequestTime;
 
 /**
  * অটো কোড জেনারেটর — `code_sequence` টেবিল থেকে নাম্বার নেয়।
@@ -29,8 +30,8 @@ final class CodeGenerator
                     'prefix'      => $prefix,
                     'next_number' => 1,
                     'padding'     => 6,
-                    'created_at'  => time(),
-                    'updated_at'  => time(),
+                    'created_at'  => RequestTime::now(),
+                    'updated_at'  => RequestTime::now(),
                 ]);
 
                 $row = DB::selectOne(
@@ -45,7 +46,7 @@ final class CodeGenerator
 
             DB::update(
                 'code_sequence',
-                ['next_number' => $number + 1, 'updated_at' => time()],
+                ['next_number' => $number + 1, 'updated_at' => RequestTime::now()],
                 ['id' => (int) $row['id']]
             );
 
@@ -78,8 +79,8 @@ final class CodeGenerator
                     'prefix'      => $prefix,
                     'next_number' => 1,
                     'padding'     => 6,
-                    'created_at'  => time(),
-                    'updated_at'  => time(),
+                    'created_at'  => RequestTime::now(),
+                    'updated_at'  => RequestTime::now(),
                 ]);
 
                 $row = DB::selectOne(
@@ -94,7 +95,7 @@ final class CodeGenerator
 
             DB::update(
                 'code_sequence',
-                ['next_number' => $start + $count, 'updated_at' => time()],
+                ['next_number' => $start + $count, 'updated_at' => RequestTime::now()],
                 ['id' => (int) $row['id']]
             );
 

@@ -4,6 +4,7 @@ namespace App\Modules\Auth\Api;
 
 use App\Core\Auth;
 use App\Core\DB;
+use App\Core\Password;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Utility;
@@ -44,7 +45,7 @@ final class AuthApi
             return Response::error('Incorrect username or password.');
         }
 
-        if (!is_string($user['password']) || !password_verify(Request::string('password'), $user['password'])) {
+        if (!is_string($user['password']) || !self::verifyPassword(Request::string('password'), $user)) {
             return Response::error('Incorrect username or password.');
         }
 
@@ -135,13 +136,16 @@ final class AuthApi
             }
         }
 
+        $salt = Password::salt();
+
         $row = [
-            'name'     => mb_substr($name, 0, 150),
-            'phone'    => mb_substr($phone, 0, 30),
-            'email'    => $email !== '' ? mb_substr($email, 0, 150) : null, // NULL, '' না — doc/11 §২ গোচা
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-            'type'     => Auth::TYPE_CUSTOMER,
-            'isActive' => 1,
+            'name'          => mb_substr($name, 0, 150),
+            'phone'         => mb_substr($phone, 0, 30),
+            'email'         => $email !== '' ? mb_substr($email, 0, 150) : null, // NULL, '' না — doc/11 §২ গোচা
+            'password'      => Password::hash($password, $salt), // password_salt + password, doc/13 §২
+            'password_salt' => $salt,
+            'type'          => Auth::TYPE_CUSTOMER,
+            'isActive'      => 1,
         ];
 
         try {
@@ -272,7 +276,7 @@ final class AuthApi
 
         $user = DB::getRow('users', ['id' => Auth::id()]);
 
-        if (!is_string($user['password']) || !password_verify(Request::string('current_password'), $user['password'])) {
+        if (!is_string($user['password']) || !self::verifyPassword(Request::string('current_password'), $user)) {
             return Response::error('Current password is incorrect.');
         }
 
@@ -287,7 +291,8 @@ final class AuthApi
             return Response::error('Password confirmation does not match.');
         }
 
-        $row = ['password' => password_hash($password, PASSWORD_DEFAULT)];
+        $salt = Password::salt();
+        $row  = ['password' => Password::hash($password, $salt), 'password_salt' => $salt];
         Utility::stampUpdate($row);
         DB::update('users', $row, ['id' => (int) $user['id']]);
 
@@ -316,6 +321,41 @@ final class AuthApi
     }
 
     /**
+     * পাসওয়ার্ড মেলানো — password_salt + password এর দুই-ধাপ হ্যাশ
+     * (App\Core\Password, doc/13-auth-and-user-management.md §২)।
+     *
+     * **legacy ফলব্যাক:** যেসব রো `password_salt` কলাম যোগ হওয়ার আগে থেকেই
+     * ছিল (পুরনো `password_hash($plain, PASSWORD_DEFAULT)` ফরম্যাট, salt
+     * খালি) — সেগুলোর জন্য সরাসরি `password_verify()`। মিললে চুপচাপ নতুন
+     * salt+hash ফরম্যাটে migrate করে ফেলা হয় ("migrate on login"), যাতে
+     * পুরনো অ্যাকাউন্ট (যেমন install.php এর ডিফল্ট অ্যাডমিন) পাসওয়ার্ড
+     * রিসেট ছাড়াই নতুন ফরম্যাটে চলে আসে।
+     *
+     * @param array<string,mixed> $user
+     */
+    private static function verifyPassword(string $plain, array $user): bool
+    {
+        $hash = (string) ($user['password'] ?? '');
+        $salt = (string) ($user['password_salt'] ?? '');
+
+        if ($salt !== '') {
+            return Password::verify($plain, $hash, $salt);
+        }
+
+        if ($hash === '' || !password_verify($plain, $hash)) {
+            return false;
+        }
+
+        $newSalt = Password::salt();
+        DB::update('users', [
+            'password'      => Password::hash($plain, $newSalt),
+            'password_salt' => $newSalt,
+        ], ['id' => (int) $user['id']]);
+
+        return true;
+    }
+
+    /**
      * পাসওয়ার্ড হ্যাশ কখনোই রেসপন্সে যাবে না।
      *
      * @param  array<string,mixed> $user
@@ -333,6 +373,7 @@ final class AuthApi
             'email'      => $user['email'],
             'phone'      => $user['phone'],
             'type'       => (int) $user['type'],
+            'type_label' => Auth::typeLabel((int) $user['type']),
             'avatar'     => $user['avatar'],
             'is_admin'   => in_array((int) $user['type'], [Auth::TYPE_SUPER_ADMIN, Auth::TYPE_STAFF], true),
         ];

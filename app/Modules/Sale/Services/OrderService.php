@@ -5,6 +5,7 @@ namespace App\Modules\Sale\Services;
 use App\Core\Auth;
 use App\Core\DB;
 use App\Core\QueryBuilder;
+use App\Core\RequestTime;
 use App\Enum\AutoLedger;
 use App\Enum\OrderStatus;
 use App\Enum\PaymentMethod;
@@ -107,7 +108,7 @@ final class OrderService
                 'payment_method'     => $method->value,
                 'advance_paid'       => 0,
                 'note'               => mb_substr(trim((string) ($data['note'] ?? '')), 0, 500),
-                'placed_at'          => time(),
+                'placed_at'          => RequestTime::now(),
             ]);
 
             foreach ($lines as $line) {
@@ -120,7 +121,7 @@ final class OrderService
                 'from_status' => 0,
                 'to_status'   => OrderStatus::Pending->value,
                 'note'        => 'Order placed',
-                'created_at'  => time(),
+                'created_at'  => RequestTime::now(),
                 'created_by'  => 0,
             ]);
 
@@ -288,7 +289,7 @@ final class OrderService
             $updates = ['status' => $to->value];
 
             if ($to === OrderStatus::Shipped) {
-                $updates['shipped_at'] = time();
+                $updates['shipped_at'] = RequestTime::now();
             }
 
             Order::updateById($orderId, $updates);
@@ -298,7 +299,7 @@ final class OrderService
                 'from_status' => $from,
                 'to_status'   => $to->value,
                 'note'        => mb_substr($note, 0, 255),
-                'created_at'  => time(),
+                'created_at'  => RequestTime::now(),
                 'created_by'  => Auth::id(),
             ]);
 
@@ -379,7 +380,7 @@ final class OrderService
     {
         $orderId = (int) $order['id'];
         $items   = OrderItem::ofOrder($orderId);
-        $now     = time();
+        $now     = RequestTime::now();
 
         $drAuto = PaymentMethod::from((int) $order['payment_method']) === PaymentMethod::Cod
             ? AutoLedger::CodReceivable

@@ -129,6 +129,40 @@ erp_saas এর মতোই `time` কলাম `INT UNSIGNED`, PHP-র `time()
 ফলে অ্যাকাউন্টস সেটআপ না করেও প্রথম দিন থেকে অর্ডার নেওয়া যায়, আর ইউজারের চার্টে
 শুধু যেগুলো আসলেই ব্যবহার হয়েছে সেগুলোই থাকে।
 
+### D-12 · admin/customer dual-session — এক PHP session, আলাদা স্লট
+
+একই ব্রাউজারে admin আর customer একসাথে লগইন থাকতে পারা দরকার হলো (ফেজ ৪.৯,
+[13-auth-and-user-management.md](13-auth-and-user-management.md))। আলাদা
+session name/cookie দিয়ে করা যেত, কিন্তু D-04 এর কারণে (`web`/`admin` এর সব
+ডেটা একই `/api/v1/...` API লেয়ার দিয়ে যায়) cookie-path দিয়ে এলাকা আলাদা করা
+সম্ভব না — অ্যাডমিন প্যানেলের নিজের AJAX-ও `/admin/*` পাথে যায় না।
+
+সমাধান: **একটাই PHP session**, কিন্তু ভেতরে আলাদা কি — `admin_user_id` বনাম
+`customer_user_id`। কোন কি পড়া হবে সেটা `App\Core\Auth::area()` ঠিক করে —
+পাথ `/admin` দিয়ে শুরু হলে `admin`, নাহলে `customer`; ব্যতিক্রম শুধু
+`X-Auth-Area: admin` হেডার (অ্যাডমিন লেআউটের শেয়ার্ড fetch হেল্পার পাঠায়)।
+
+একই সিদ্ধান্তের অংশ: admin এলাকায় ২০ মিনিট sliding inactivity-timeout
+(`ADMIN_SESSION_TTL`), customer এলাকায় নাই।
+
+### D-13 · সল্টেড পাসওয়ার্ড হ্যাশিং — `App\Core\Password`
+
+`password_hash($plain, PASSWORD_DEFAULT)` সরাসরি না করে দুই ধাপে
+(ফেজ ৪.৯): `password_salt` (random, অ্যাকাউন্ট তৈরির সময় একবার) দিয়ে আগে
+HMAC-SHA256 পেপার, তারপর সেটা bcrypt। কারণ ও legacy-migration কৌশল
+বিস্তারিত [13-auth-and-user-management.md](13-auth-and-user-management.md) §২-এ।
+
+### D-14 · এক রিকোয়েস্টে একটাই "এখন" — `App\Core\RequestTime`
+
+`time()` সরাসরি ছড়িয়ে-ছিটিয়ে কল করলে একই রিকোয়েস্টে একাধিক টেবিলে লেখা
+row গুলোর `created_at`/`updated_at` সেকেন্ড-বাউন্ডারি পেরোলে আলাদা হয়ে
+যেতে পারত — ডিবাগে সম্পর্কিত row মেলানো কঠিন করে তুলত (ফেজ ৪.৯৫)।
+`RequestTime::now()` প্রথম কলেই ভ্যালু ফিক্সড করে রাখে, বাকি পুরো
+রিকোয়েস্টে সেই একই ভ্যালু ফেরত দেয় — `Utility::stampCreate()`/
+`stampUpdate()` সহ create/update দুই ক্ষেত্রেই। ব্যতিক্রম শুধু যেখানে
+`time()` টাইমস্ট্যাম্প না, ইউনিকনেস-সোর্স হিসেবে ব্যবহৃত হচ্ছিল —
+বিস্তারিত [14-request-time.md](14-request-time.md)।
+
 ---
 
 ## কোডিং কনভেনশন

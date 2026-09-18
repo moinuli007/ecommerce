@@ -3,6 +3,7 @@
 namespace App\Modules\Account\Services;
 
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Core\Utility;
 use App\Enum\AutoChart;
 use App\Enum\AutoLedger;
@@ -266,7 +267,7 @@ final class LedgerAccounts
 
         $party['ledger_id'] = $ledgerId;
 
-        DB::update($table, ['ledger_id' => $ledgerId, 'updated_at' => time()], ['id' => (int) $party['id']]);
+        DB::update($table, ['ledger_id' => $ledgerId, 'updated_at' => RequestTime::now()], ['id' => (int) $party['id']]);
 
         return $ledgerId;
     }

@@ -4,6 +4,7 @@ namespace App\Modules\Purchase\Services;
 
 use App\Core\Auth;
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Enum\StockChangeType;
 use App\Modules\Purchase\Models\StockLedger;
 
@@ -50,7 +51,7 @@ final class StockService
             'qty'          => $signed,
             'rate'         => round($rate, 4),
             'action_time'  => $actionTime,
-            'entry_time'   => time(),
+            'entry_time'   => RequestTime::now(),
             'created_by'   => Auth::id(),
         ]);
 

@@ -205,11 +205,12 @@ final class Router
     private static function guard(string $guard): ?int
     {
         return match ($guard) {
-            'guest'    => null,
-            'auth'     => Auth::check() ? null : 401,
-            'admin'    => Auth::check() ? (Auth::isAdmin() ? null : 403) : 401,
-            'customer' => Auth::check() ? (Auth::isCustomer() ? null : 403) : 401,
-            default    => throw new RuntimeException("Unknown guard: $guard"),
+            'guest'       => null,
+            'auth'        => Auth::check() ? null : 401,
+            'admin'       => Auth::check() ? (Auth::isAdmin() ? null : 403) : 401,
+            'super_admin' => Auth::check() ? (Auth::isSuperAdmin() ? null : 403) : 401,
+            'customer'    => Auth::check() ? (Auth::isCustomer() ? null : 403) : 401,
+            default       => throw new RuntimeException("Unknown guard: $guard"),
         };
     }
 

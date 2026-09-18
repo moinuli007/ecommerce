@@ -23,6 +23,8 @@ require_once __DIR__ . '/../bootstrap.php';
 
 use App\Core\DB;
 use App\Core\Env;
+use App\Core\Password;
+use App\Core\RequestTime;
 
 // ---------------------------------------------------------------------------
 // আর্গুমেন্ট
@@ -66,6 +68,12 @@ foreach (array_merge($schema, $seed) as $file) {
     echo '✓ Ran: ' . basename($file) . "\n";
 }
 
+// আগে ইনস্টল করা DB-তে `users` টেবিল ইতিমধ্যে ছিল বলে CREATE TABLE IF NOT
+// EXISTS নতুন কলাম (password_salt) যোগ করবে না — MySQL এ
+// "ALTER TABLE ... ADD COLUMN IF NOT EXISTS" নাই, তাই এখানে PHP দিয়ে
+// idempotent-ভাবে চেক করে দরকার হলেই ALTER (doc/13-auth-and-user-management.md §২)।
+migrateUsersPasswordSaltColumn();
+
 // --demo দিলে ডেমো ডেটাও (রেফারেন্স সাইটের ক্যাটাগরি গাছ ইত্যাদি)
 if (isset($options['demo'])) {
     $demo = glob(__DIR__ . '/demo/*.sql') ?: [];
@@ -84,15 +92,18 @@ if (!isset($options['skip-admin'])) {
     $existing = DB::getRow('users', ['email' => $adminEmail]);
 
     if ($existing === []) {
+        $salt = Password::salt();
+
         DB::insert('users', [
-            'name'       => $adminName,
-            'email'      => $adminEmail,
-            'phone'      => $adminPhone,
-            'password'   => password_hash($adminPassword, PASSWORD_DEFAULT),
-            'type'       => 1, // super_admin
-            'isActive'   => 1,
-            'created_at' => time(),
-            'updated_at' => time(),
+            'name'          => $adminName,
+            'email'         => $adminEmail,
+            'phone'         => $adminPhone,
+            'password'      => Password::hash($adminPassword, $salt), // password_salt + password, doc/13 §২
+            'password_salt' => $salt,
+            'type'          => 1, // super_admin
+            'isActive'      => 1,
+            'created_at'    => RequestTime::now(),
+            'updated_at'    => RequestTime::now(),
         ]);
 
         echo "✓ Admin created: $adminEmail / $adminPassword\n";
@@ -105,6 +116,35 @@ if (!isset($options['skip-admin'])) {
 echo "\nInstall finished. Now visit: " . Env::get('APP_URL') . "/admin/login\n";
 
 // ---------------------------------------------------------------------------
+
+/**
+ * `users.password_salt` কলাম না থাকলে যোগ করে — পুরনো ইনস্টলে
+ * CREATE TABLE IF NOT EXISTS কিছু করে না বলে এই আলাদা ধাপ লাগে
+ * (doc/13-auth-and-user-management.md §২)।
+ */
+function migrateUsersPasswordSaltColumn(): void
+{
+    $database = (string) Env::get('DB_DATABASE');
+
+    $exists = DB::scalar(
+        'SELECT COUNT(*) AS c FROM information_schema.COLUMNS '
+            . 'WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+        [$database, 'users', 'password_salt']
+    );
+
+    if ((int) $exists > 0) {
+        echo "· users.password_salt already exists\n";
+
+        return;
+    }
+
+    DB::connection()->query(
+        "ALTER TABLE `users` ADD COLUMN `password_salt` CHAR(32) NULL "
+            . "COMMENT 'random, App\\\\Core\\\\Password::salt()' AFTER `password`"
+    );
+
+    echo "✓ Migrated: users.password_salt added\n";
+}
 
 /**
  * একটা .sql ফাইলের সব স্টেটমেন্ট চালায়।

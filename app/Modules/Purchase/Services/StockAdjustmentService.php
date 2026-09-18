@@ -3,6 +3,7 @@
 namespace App\Modules\Purchase\Services;
 
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Core\Utility;
 use App\Enum\AutoLedger;
 use App\Enum\StockChangeType;
@@ -79,7 +80,7 @@ final class StockAdjustmentService
                 'reason'      => $reason,
                 'adjust_date' => $meta['adjust_date'],
                 'note'        => $meta['note'],
-                'updated_at'  => time(),
+                'updated_at'  => RequestTime::now(),
             ], ['id' => $id]);
 
             self::applyItems($id, $reason, $items, $meta['adjust_date']);
@@ -264,7 +265,7 @@ final class StockAdjustmentService
 
         $meta = [
             'note'        => mb_substr(trim((string) ($data['note'] ?? '')), 0, 255),
-            'adjust_date' => Utility::toTime((string) ($data['adjust_date'] ?? ''), time()),
+            'adjust_date' => Utility::toTime((string) ($data['adjust_date'] ?? ''), RequestTime::now()),
         ];
 
         return [$reason, $items, $meta];

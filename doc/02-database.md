@@ -42,8 +42,9 @@ database/
 |---|---|---|
 | `name` | VARCHAR(150) | |
 | `email` / `phone` | VARCHAR, UNIQUE | দুটোর যেকোনোটা দিয়ে লগইন |
-| `password` | VARCHAR(255) NULL | `password_hash()`; গেস্ট চেকআউটে NULL |
-| `type` | TINYINT | `1` super_admin · `2` staff · `3` customer |
+| `password` | VARCHAR(255) NULL | `App\Core\Password::hash($plain, password_salt)`; গেস্ট চেকআউটে NULL |
+| `password_salt` | CHAR(32) NULL | random, `App\Core\Password::salt()` — পাসওয়ার্ড হ্যাশের দ্বিতীয় ভেরিয়েবল, [13-auth-and-user-management.md](13-auth-and-user-management.md) §২ |
+| `type` | TINYINT | `1` super_admin · `2` staff (UI-তে "Admin") · `3` customer |
 | `last_login` | INT | |
 
 কেন এক টেবিল: কাস্টমার পরে স্টাফ হতে পারে, আর `created_by` সব জায়গায় একই

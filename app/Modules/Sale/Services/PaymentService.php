@@ -4,6 +4,7 @@ namespace App\Modules\Sale\Services;
 
 use App\Core\Auth;
 use App\Core\DB;
+use App\Core\RequestTime;
 use App\Enum\AutoLedger;
 use App\Enum\PaymentMethod;
 use App\Enum\PaymentStatus;
@@ -80,7 +81,7 @@ final class PaymentService
             OrderPayment::updateById($paymentId, [
                 'status'      => PaymentStatus::Verified->value,
                 'verified_by' => Auth::id(),
-                'verified_at' => time(),
+                'verified_at' => RequestTime::now(),
             ]);
 
             Voucher::create(
@@ -88,7 +89,7 @@ final class PaymentService
                 (float) $payment['amount'],
                 LedgerAccounts::systemLedger(AutoLedger::MobileBanking),
                 LedgerAccounts::systemLedger(AutoLedger::AdvanceFromCustomer),
-                time(),
+                RequestTime::now(),
                 'Advance ' . PaymentMethod::from((int) $payment['method'])->label() . ' — ' . $order['code'],
                 (string) $order['id']
             );
@@ -110,7 +111,7 @@ final class PaymentService
             'status'      => PaymentStatus::Rejected->value,
             'note'        => mb_substr($note, 0, 255),
             'verified_by' => Auth::id(),
-            'verified_at' => time(),
+            'verified_at' => RequestTime::now(),
         ]);
 
         return OrderPayment::find((int) $payment['id']);

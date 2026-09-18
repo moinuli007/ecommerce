@@ -50,6 +50,9 @@ web আর admin এর প্রতিটি ডেটা API লেয়া�
 | ৩.৫ | কাস্টমার সেলফ-সার্ভিস অ্যাকাউন্ট: রেজিস্ট্রেশন, লগইন, প্রোফাইল আপডেট, অ্যাকাউন্ট ডিলিট | ✅ শেষ — [11-customer-account.md](11-customer-account.md) |
 | **৪** | ইনভেনটরি: purchase, stock ledger, stock adjustment, সাপ্লায়ার | ✅ শেষ — [08-purchase.md](08-purchase.md) |
 | ৪.৫ | ক্যাটাগরি/প্রোডাক্ট ছবি আপলোড, Purchase-এ বিক্রয় মূল্য | পরিকল্পিত — [09-media-and-purchase-pricing.md](09-media-and-purchase-pricing.md) |
+| ৪.৮ | ইউনিট টেস্টিং: PHPUnit, DB-রোলব্যাক আইসোলেশন, `tests/` স্ক্যাফোল্ড | ✅ শেষ — [12-unit-testing.md](12-unit-testing.md) |
+| ৪.৯ | অথ সিকিউরিটি: admin+customer dual-session, admin ২০-মিনিট sliding টাইমআউট, salted password hashing, Super Admin/Admin ইউজার ম্যানেজমেন্ট | ✅ শেষ — [13-auth-and-user-management.md](13-auth-and-user-management.md) |
+| ৪.৯৫ | রিকোয়েস্ট টাইম: `App\Core\RequestTime` — এক রিকোয়েস্টে সব টেবিলে হুবহু একই `created_at`/`updated_at` | ✅ শেষ — [14-request-time.md](14-request-time.md) |
 | ৫ | পেমেন্ট: COD সেটেলমেন্ট, bKash/গেটওয়ে, রিফান্ড, রিটার্ন | |
 | ৬ | রিপোর্ট: sales, stock, profit, income statement, balance sheet | |
 | ৭ | পলিশ: সার্চ, SEO, ভাষা টগল, নিউজলেটার, ইমেইল/SMS | |

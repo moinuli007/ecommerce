@@ -65,6 +65,7 @@ erp_saas এর অ্যাডমিন লেআউটের কাঠাম�
 | `path` | `APP_URL` এর পরের অংশ |
 | `icon` | `Menu::icon()` এর নাম (নিচে তালিকা) |
 | `match` | `exact` না দিলে প্রিফিক্স ম্যাচ — `/admin/vouchers/12` ও প্যারেন্টকে active দেখাবে |
+| `superAdminOnly` | `true` হলে শুধু Super Admin দেখবে (`Auth::isSuperAdmin()`) — যেমন "Admin Users", [13-auth-and-user-management.md](13-auth-and-user-management.md) §৪ |
 
 `Menu::locate()` ব্রেডক্রাম্বের জন্য সবচেয়ে নির্দিষ্ট মিল বের করে।
 

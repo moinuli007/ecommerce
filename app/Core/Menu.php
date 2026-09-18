@@ -5,6 +5,11 @@ namespace App\Core;
 /**
  * অ্যাডমিন সাইডবার মেনু।
  *
+ * `Auth::isSuperAdmin()` এর মাধ্যমে বর্তমান ইউজার দেখে কিছু আইটেম
+ * (যেমন Admin Users) ফিল্টার হয় — admin() কল হয় শুধু guard: admin/
+ * super_admin পাশ করা রিকোয়েস্টে (resources/views/layouts/admin.php),
+ * তাই এখানে Auth::check() আলাদা করে যাচাই লাগে না।
+ *
  * erp_saas এ মেনু `module` টেবিল থেকে আসে; এখানে কোডে (সিদ্ধান্ত D-02 এর ধারাবাহিকতা) —
  * রাউট যেহেতু কোডে, মেনুও কোডে থাকলে দুটো কখনো আলাদা হয়ে যাবে না।
  *
@@ -72,9 +77,29 @@ final class Menu
                     ['label' => 'Trial Balance', 'path' => '/admin/reports/trial-balance', 'icon' => 'scale'],
                 ],
             ],
+            [
+                'title' => 'Settings',
+                'icon'  => 'settings',
+                'items' => [
+                    // শুধু Super Admin — route guard ও 'super_admin' (doc/13 §৪),
+                    // এখানে না লুকালেও রাউট নিজেই আটকাবে, কিন্তু মেনুতে দেখানো
+                    // ঠিক না যা ক্লিক করা যাবে না
+                    ['label' => 'Admin Users', 'path' => '/admin/users', 'icon' => 'user', 'superAdminOnly' => true],
+                ],
+            ],
 
             // ফেজ ২–৫ এ এখানে যোগ হবে: ক্যাটালগ, অর্ডার, ইনভেনটরি, কাস্টমার, সেটিংস
         ];
+
+        $isSuperAdmin = Auth::isSuperAdmin();
+
+        foreach ($groups as &$group) {
+            $group['items'] = array_values(array_filter(
+                $group['items'],
+                static fn (array $item) => !($item['superAdminOnly'] ?? false) || $isSuperAdmin
+            ));
+        }
+        unset($group);
 
         return array_values(array_filter($groups, static fn (array $g) => $g['items'] !== []));
     }

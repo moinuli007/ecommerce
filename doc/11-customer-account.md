@@ -154,11 +154,13 @@ in use."), দুই কাস্টমার রো মার্জ করা�
 `PUT /api/v1/auth/password` (guard: auth) — ইনপুট: `current_password`,
 `password`, `password_confirmation`।
 
-`AuthApi::changePassword()`: `password_verify(current_password, ...)`
-মিলতে হবে (ভুল হলে *"Current password is incorrect."*), নতুন পাসওয়ার্ড
-`password_confirmation` এর সাথে মিলতে হবে (`Validator` এ `same`/`confirmed`
-রুল নাই — ম্যানুয়াল `!==` চেক), দৈর্ঘ্য ম্যানুয়াল `mb_strlen() >= 6` (§২
-এর একই গোচা)।
+`AuthApi::changePassword()`: `AuthApi::verifyPassword(current_password, ...)`
+মিলতে হবে (ভুল হলে *"Current password is incorrect."*) — password_salt +
+password এর দুই-ধাপ হ্যাশ, legacy (salt-বিহীন) রো এর জন্য ফলব্যাক-সহ
+মাইগ্রেট-অন-লগইন ([13-auth-and-user-management.md](13-auth-and-user-management.md)
+§২, ফেজ ৪.৯-এ যোগ)। নতুন পাসওয়ার্ড `password_confirmation` এর সাথে মিলতে
+হবে (`Validator` এ `same`/`confirmed` রুল নাই — ম্যানুয়াল `!==` চেক), দৈর্ঘ্য
+ম্যানুয়াল `mb_strlen() >= 6` (§২ এর একই গোচা)।
 
 ---
 

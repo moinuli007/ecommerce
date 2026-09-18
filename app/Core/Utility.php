@@ -11,11 +11,14 @@ final class Utility
      * created_at/created_by অথবা updated_at/updated_by বসিয়ে দেয়।
      * প্রতিটা insert/update এর আগে এটা কল করার নিয়ম।
      *
+     * `time()` না, `RequestTime::now()` — একই রিকোয়েস্টে একাধিক টেবিলে
+     * লেখা row গুলোর টাইমস্ট্যাম্প যেন হুবহু মেলে (doc/14-request-time.md)।
+     *
      * @param array<string,mixed> $data
      */
     public static function stampCreate(array &$data): void
     {
-        $now  = time();
+        $now  = RequestTime::now();
         $user = Auth::id();
 
         $data['created_at'] = $data['created_at'] ?? $now;
@@ -27,7 +30,7 @@ final class Utility
     /** @param array<string,mixed> $data */
     public static function stampUpdate(array &$data): void
     {
-        $data['updated_at'] = time();
+        $data['updated_at'] = RequestTime::now();
         $data['updated_by'] = Auth::id();
     }
 

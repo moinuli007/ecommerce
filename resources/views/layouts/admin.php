@@ -294,7 +294,7 @@ $initial  = mb_substr((string) ($user['name'] ?? '?'), 0, 1);
                 <span class="user-letter"><?= View::e($initial) ?></span>
                 <span class="user-detail">
                     <span class="user-name"><?= View::e($user['name'] ?? '') ?></span>
-                    <span class="user-role"><?= Auth::isSuperAdmin() ? 'Super Admin' : 'Staff' ?></span>
+                    <span class="user-role"><?= View::e(Auth::typeLabel(Auth::type())) ?></span>
                 </span>
                 <?= Menu::icon('chevron') ?>
             </button>
@@ -367,6 +367,12 @@ $initial  = mb_substr((string) ($user['name'] ?? '?'), 0, 1);
 // সব অ্যাডমিন পেজের শেয়ার্ড API হেল্পার।
 // রেসপন্সের `m` মেসেজগুলো নিজে থেকেই দেখায়, `status !== 1` হলে null দেয়।
 // ব্যবহার:  const data = await api('/products', {name: '...'}, 'POST');
+//
+// `X-Auth-Area: admin` হেডার — admin আর customer একই ব্রাউজারে একসাথে
+// লগইন থাকতে পারে (doc/13-auth-and-user-management.md), দুটোর সেশন-স্লট
+// আলাদা। `/api/v1/...` পাথ অ্যাডমিন আর স্টোরফ্রন্ট দুটোই শেয়ার করে (D-04)
+// বলে পাথ দেখে এলাকা বোঝা যায় না — তাই এই হেডার দিয়েই App\Core\Auth::area()
+// কে বলে দেওয়া হয় এটা admin এলাকার কল।
 // ---------------------------------------------------------------------------
 window.API_BASE = '<?= View::e($appUrl) ?>/api/v1';
 
@@ -378,7 +384,7 @@ window.api = async function (path, body, method) {
     try {
         const response = await fetch(window.API_BASE + path, {
             method:      method,
-            headers:     { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers:     { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-Auth-Area': 'admin' },
             credentials: 'same-origin',
             body:        body ? JSON.stringify(body) : undefined
         });
@@ -411,7 +417,7 @@ window.apiUpload = async function (path, formData, method) {
     try {
         const response = await fetch(window.API_BASE + path, {
             method:      method,
-            headers:     { 'X-Requested-With': 'XMLHttpRequest' },
+            headers:     { 'X-Requested-With': 'XMLHttpRequest', 'X-Auth-Area': 'admin' },
             credentials: 'same-origin',
             body:        formData
         });

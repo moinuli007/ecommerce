@@ -13,6 +13,7 @@ use App\Modules\Account\Controllers\LedgerController;
 use App\Modules\Account\Controllers\VoucherController;
 use App\Modules\Auth\Controllers\LoginController;
 use App\Modules\Auth\Controllers\ProfileController;
+use App\Modules\Auth\Controllers\UserController;
 use App\Modules\Catalog\Controllers\CatalogController;
 use App\Modules\Dashboard\Controllers\DashboardController;
 use App\Modules\Purchase\Controllers\PurchaseController;
@@ -33,6 +34,14 @@ Router::group(['prefix' => '/admin', 'guard' => 'admin'], function (): void {
 
     // প্রোফাইল
     Router::get('/profile', [ProfileController::class, 'show'], ['name' => 'admin.profile']);
+
+    // ---------------------------------------------------------------------
+    // অ্যাডমিন ইউজার ম্যানেজমেন্ট — শুধু Super Admin (doc/13 §৪); স্থির
+    // পাথ আগে, {id} পরে
+    // ---------------------------------------------------------------------
+    Router::get('/users',           [UserController::class, 'index'],  ['guard' => 'super_admin', 'name' => 'admin.user.index']);
+    Router::get('/users/create',    [UserController::class, 'create'], ['guard' => 'super_admin', 'name' => 'admin.user.create']);
+    Router::get('/users/{id}/edit', [UserController::class, 'edit'],   ['guard' => 'super_admin', 'name' => 'admin.user.edit']);
 
     // ---------------------------------------------------------------------
     // ক্যাটালগ — স্থির পাথ আগে, {id} পরে
